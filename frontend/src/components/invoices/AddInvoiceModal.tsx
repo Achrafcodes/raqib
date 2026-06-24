@@ -1,0 +1,210 @@
+import { useState, useEffect, FormEvent } from 'react';
+import Modal from '../ui/Modal';
+import api from '../../utils/api';
+import { useRefresh } from '../../context/RefreshContext';
+import type { Client, Project } from '../../types';
+
+interface Props { onClose: () => void }
+
+interface LineItem { description: string; quantity: number; unitPrice: number }
+
+const INPUT = 'w-full bg-r-bg border border-r-border rounded-[8px] px-3 py-[9px] text-[13px] text-r-1 placeholder:text-r-3 outline-none focus:border-r-accent transition-colors';
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-[5px]">
+      <label className="text-[10px] font-semibold text-r-3 uppercase tracking-[0.08em]">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+export default function AddInvoiceModal({ onClose }: Props) {
+  const { refresh } = useRefresh();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [clientId, setClientId] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [status, setStatus] = useState('draft');
+  const [dueDate, setDueDate] = useState('');
+  const [tax, setTax] = useState('0');
+  const [items, setItems] = useState<LineItem[]>([{ description: '', quantity: 1, unitPrice: 0 }]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.get('/api/clients').then((res) => setClients(res.data.data));
+  }, []);
+
+  useEffect(() => {
+    if (!clientId) { setProjects([]); setProjectId(''); return; }
+    api.get('/api/projects').then((res) => {
+      const all: Project[] = res.data.data;
+      const clientProjects = all.filter((p) =>
+        typeof p.clientId === 'object' ? (p.clientId as { _id: string })._id === clientId : p.clientId === clientId
+      );
+      setProjects(clientProjects);
+      setProjectId('');
+    });
+  }, [clientId]);
+
+  const setItem = (i: number, k: keyof LineItem, v: string) => {
+    setItems((prev) => prev.map((item, idx) =>
+      idx === i ? { ...item, [k]: k === 'description' ? v : parseFloat(v) || 0 } : item
+    ));
+  };
+
+  const addItem = () => setItems((p) => [...p, { description: '', quantity: 1, unitPrice: 0 }]);
+  const removeItem = (i: number) => setItems((p) => p.filter((_, idx) => idx !== i));
+
+  const subtotal = items.reduce((s, it) => s + it.quantity * it.unitPrice, 0);
+  const taxAmount = subtotal * (parseFloat(tax) || 0) / 100;
+  const total = subtotal + taxAmount;
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!clientId) { setError('Please select a client.'); return; }
+    if (items.some((it) => !it.description.trim())) { setError('All line items need a description.'); return; }
+    setError('');
+    setLoading(true);
+    try {
+      await api.post('/api/invoices', {
+        clientId,
+        projectId: projectId || undefined,
+        status,
+        dueDate: dueDate || undefined,
+        tax: parseFloat(tax) || 0,
+        items: items.map((it) => ({ ...it, total: it.quantity * it.unitPrice })),
+        subtotal,
+        total,
+      });
+      refresh();
+      onClose();
+    } catch {
+      setError('Failed to create invoice. Try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal title="New Invoice" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {/* Client + Project */}
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Client *">
+            <select value={clientId} onChange={(e) => setClientId(e.target.value)} className={INPUT}>
+              <option value="">Select client</option>
+              {clients.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+            </select>
+          </Field>
+          <Field label="Project">
+            <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className={INPUT} disabled={!clientId}>
+              <option value="">No project</option>
+              {projects.map((p) => <option key={p._id} value={p._id}>{p.title}</option>)}
+            </select>
+          </Field>
+        </div>
+
+        {/* Status + Due Date */}
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Status">
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className={INPUT}>
+              {['draft', 'sent', 'paid', 'overdue'].map((s) => (
+                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Due Date">
+            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={INPUT} />
+          </Field>
+        </div>
+
+        {/* Line Items */}
+        <div className="flex flex-col gap-[6px]">
+          <div className="flex justify-between items-center">
+            <label className="text-[10px] font-semibold text-r-3 uppercase tracking-[0.08em]">Line Items</label>
+            <button type="button" onClick={addItem} className="text-[11px] font-medium text-r-accent hover:opacity-80 cursor-pointer">+ Add item</button>
+          </div>
+
+          {/* Header */}
+          <div className="grid grid-cols-[1fr_60px_80px_24px] gap-2 px-1">
+            {['Description', 'Qty', 'Price', ''].map((h) => (
+              <span key={h} className="text-[9px] font-semibold text-r-3 uppercase tracking-[0.08em]">{h}</span>
+            ))}
+          </div>
+
+          {items.map((item, i) => (
+            <div key={i} className="grid grid-cols-[1fr_60px_80px_24px] gap-2 items-center">
+              <input
+                value={item.description}
+                onChange={(e) => setItem(i, 'description', e.target.value)}
+                placeholder="Description"
+                className={INPUT}
+              />
+              <input
+                type="number" min="1"
+                value={item.quantity}
+                onChange={(e) => setItem(i, 'quantity', e.target.value)}
+                className={INPUT + ' text-center'}
+              />
+              <input
+                type="number" min="0" step="0.01"
+                value={item.unitPrice}
+                onChange={(e) => setItem(i, 'unitPrice', e.target.value)}
+                className={INPUT}
+              />
+              <button
+                type="button"
+                onClick={() => removeItem(i)}
+                disabled={items.length === 1}
+                className="text-r-3 hover:text-[var(--overdue)] transition-colors cursor-pointer disabled:opacity-30 text-[16px] leading-none"
+              >×</button>
+            </div>
+          ))}
+        </div>
+
+        {/* Tax + Totals */}
+        <div className="flex flex-col gap-2 border-t border-r-border pt-3 mt-1">
+          <div className="flex justify-between items-center">
+            <span className="text-[12px] text-r-3">Subtotal</span>
+            <span className="text-[12px] font-medium text-r-1">${subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] text-r-3">Tax</span>
+              <input
+                type="number" min="0" max="100" step="0.5"
+                value={tax}
+                onChange={(e) => setTax(e.target.value)}
+                className="w-[56px] bg-r-bg border border-r-border rounded-[6px] px-2 py-[4px] text-[12px] text-r-1 outline-none focus:border-r-accent text-center"
+              />
+              <span className="text-[12px] text-r-3">%</span>
+            </div>
+            <span className="text-[12px] font-medium text-r-1">${taxAmount.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center border-t border-r-border pt-2">
+            <span className="text-[13px] font-semibold text-r-1">Total</span>
+            <span className="text-[15px] font-bold tabular-nums" style={{ color: 'var(--accent)' }}>${total.toFixed(2)}</span>
+          </div>
+        </div>
+
+        {error && <p className="text-[12px]" style={{ color: 'var(--overdue)' }}>{error}</p>}
+
+        <div className="flex justify-end gap-2 mt-1">
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-[8px] text-[13px] font-medium text-r-3 hover:text-r-1 hover:bg-r-s2 transition-all cursor-pointer">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-5 py-2 rounded-[8px] text-[13px] font-semibold text-[#0C0E14] disabled:opacity-50 cursor-pointer hover:opacity-90 transition-opacity"
+            style={{ background: 'var(--accent)' }}
+          >
+            {loading ? 'Creating…' : 'Create Invoice'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
