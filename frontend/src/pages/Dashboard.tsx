@@ -31,7 +31,7 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-5">
       {/* A. PAGE HEADER */}
       <div className="flex justify-between items-center">
         <div>
@@ -48,14 +48,14 @@ export default function Dashboard() {
       </div>
 
       {/* B. STAT CARDS ROW */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-[10px]">
         {STATS.map((s) => (
           <StatCard key={s.label} {...s} />
         ))}
       </div>
 
       {/* C. CHARTS ROW */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-[10px]">
         <div className="lg:col-span-3">
           <EarningsChart />
         </div>
