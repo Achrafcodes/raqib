@@ -72,6 +72,7 @@ export default function Sidebar() {
   }, []);
 
   return (
+    <>
     <aside className="w-[320px] shrink-0 bg-r-bg border-l border-r-border px-6 py-6 overflow-y-auto flex flex-col gap-7">
 
       {/* THIS MONTH */}
@@ -176,5 +177,6 @@ export default function Sidebar() {
     {showAddClient && (
       <AddClientModal onClose={() => setShowAddClient(false)} onCreated={refresh} />
     )}
+    </>
   );
 }
