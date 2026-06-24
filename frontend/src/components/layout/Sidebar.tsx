@@ -5,6 +5,7 @@ import type { Reminder, Project } from '../../types';
 import AddClientModal from '../clients/AddClientModal';
 import AddProjectModal from '../projects/AddProjectModal';
 import AddInvoiceModal from '../invoices/AddInvoiceModal';
+import AddReminderModal from '../reminders/AddReminderModal';
 import { useRefresh } from '../../context/RefreshContext';
 
 type Action = { icon: React.ReactNode; label: string; key: string };
@@ -53,6 +54,7 @@ export default function Sidebar() {
   const [showAddClient, setShowAddClient] = useState(false);
   const [showAddProject, setShowAddProject] = useState(false);
   const [showAddInvoice, setShowAddInvoice] = useState(false);
+  const [showAddReminder, setShowAddReminder] = useState(false);
   const { tick, refresh } = useRefresh();
 
   useEffect(() => {
@@ -104,6 +106,7 @@ export default function Sidebar() {
                 if (a.key === 'client') setShowAddClient(true);
                 if (a.key === 'project') setShowAddProject(true);
                 if (a.key === 'invoice') setShowAddInvoice(true);
+                if (a.key === 'reminder') setShowAddReminder(true);
               }}
               className="bg-r-surface border border-r-border rounded-[10px] py-5 flex flex-col items-center gap-[10px] cursor-pointer hover:border-r-b2 hover:bg-r-s2 transition-all duration-150"
             >
@@ -185,6 +188,9 @@ export default function Sidebar() {
     )}
     {showAddInvoice && (
       <AddInvoiceModal onClose={() => setShowAddInvoice(false)} />
+    )}
+    {showAddReminder && (
+      <AddReminderModal onClose={() => setShowAddReminder(false)} />
     )}
     </>
   );
