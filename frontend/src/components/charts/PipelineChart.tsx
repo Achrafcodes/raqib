@@ -1,68 +1,51 @@
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
-interface Props {
-  data: Record<string, number>;
-}
+const SEGMENTS = [
+  { label: 'Lead', value: 30, color: '#60A5FA' },
+  { label: 'Negotiating', value: 20, color: '#FBBF24' },
+  { label: 'Active', value: 35, color: '#4ADE80' },
+  { label: 'Done', value: 15, color: '#475569' },
+];
 
-const STATUS_COLORS: Record<string, string> = {
-  lead:         '#60A5FA',
-  negotiating:  '#FBBF24',
-  active:       '#4ADE80',
-  done:         '#6B7280',
-  lost:         '#374151',
-};
-
-export default function PipelineChart({ data }: Props) {
-  const total = Object.values(data).reduce((s, v) => s + v, 0);
-
-  const chartData = Object.entries(data)
-    .filter(([, v]) => v > 0)
-    .map(([key, value]) => ({ name: key, value }));
-
-  if (total === 0) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-[12px] text-raqib-muted">No project data yet</p>
-      </div>
-    );
-  }
-
+export default function PipelineChart() {
   return (
-    <div className="flex items-center gap-6 h-full">
-      <ResponsiveContainer width={160} height={160}>
-        <PieChart>
-          <Pie
-            data={chartData}
-            cx="50%"
-            cy="50%"
-            innerRadius={55}
-            outerRadius={75}
-            dataKey="value"
-            strokeWidth={0}
-          >
-            {chartData.map((entry) => (
-              <Cell key={entry.name} fill={STATUS_COLORS[entry.name] ?? '#6B7280'} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{ backgroundColor: '#161B27', border: '1px solid #1F2937', borderRadius: 6, fontSize: 12 }}
-            itemStyle={{ color: '#F9FAFB' }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+    <div className="bg-r-surface border border-r-border rounded-[10px] p-6 h-full flex flex-col">
+      <div className="mb-4">
+        <span className="text-[10px] font-medium text-r-3 uppercase tracking-[0.08em]">Client Pipeline</span>
+        <p className="text-[11px] text-r-3 mt-[2px]">Stage breakdown</p>
+      </div>
 
-      <div className="flex flex-col gap-2">
-        {chartData.map((entry) => (
-          <div key={entry.name} className="flex items-center justify-between gap-8">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS[entry.name] ?? '#6B7280' }} />
-              <span className="text-[12px] text-raqib-text capitalize">{entry.name}</span>
+      <div className="flex-1 flex flex-col items-center justify-center gap-6">
+        <div style={{ width: 132, height: 132 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={SEGMENTS}
+                dataKey="value"
+                innerRadius={42}
+                outerRadius={64}
+                paddingAngle={2}
+                strokeWidth={0}
+              >
+                {SEGMENTS.map((s) => (
+                  <Cell key={s.label} fill={s.color} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="w-full">
+          {SEGMENTS.map((s) => (
+            <div key={s.label} className="flex justify-between items-center py-[3px]">
+              <div className="flex items-center gap-2">
+                <span className="w-[6px] h-[6px] rounded-full" style={{ background: s.color }} />
+                <span className="text-[11px] text-r-2">{s.label}</span>
+              </div>
+              <span className="text-[11px] text-r-3 tabular-nums">{s.value}%</span>
             </div>
-            <span className="text-[12px] text-raqib-muted">
-              {Math.round((entry.value / total) * 100)}%
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -1,69 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  --bg:           #0B0F1A;
-  --surface:      #111827;
-  --border:       #1E2A3A;
-  --accent:       #4ADE80;
-  --accent-hover: #22C55E;
-  --text:         #F1F5F9;
-  --muted:        #64748B;
+  --bg:              #0C0E14;
+  --surface:         #141920;
+  --surface-2:       #1A2030;
+  --border:          #1E2533;
+  --border-2:        #2D3748;
+  --accent:          #4ADE80;
+  --accent-dim:      rgba(74, 222, 128, 0.08);
+  --text-1:          #F1F5F9;
+  --text-2:          #94A3B8;
+  --text-3:          #475569;
+  --paid:            #4ADE80;
+  --paid-bg:         rgba(74,222,128,0.10);
+  --pending:         #FBBF24;
+  --pending-bg:      rgba(251,191,36,0.10);
+  --overdue:         #F87171;
+  --overdue-bg:      rgba(248,113,113,0.10);
+  --lead:            #60A5FA;
+  --lead-bg:         rgba(96,165,250,0.10);
+  --lost:            #475569;
+  --lost-bg:         rgba(71,85,105,0.10);
 }
 
-.light {
-  --bg:           #F8FAFC;
-  --surface:      #FFFFFF;
-  --border:       #E2E8F0;
-  --accent:       #16A34A;
-  --accent-hover: #15803D;
-  --text:         #0F172A;
-  --muted:        #64748B;
+@theme {
+  --color-r-bg:      var(--bg);
+  --color-r-surface: var(--surface);
+  --color-r-s2:      var(--surface-2);
+  --color-r-border:  var(--border);
+  --color-r-b2:      var(--border-2);
+  --color-r-accent:  var(--accent);
+  --color-r-1:       var(--text-1);
+  --color-r-2:       var(--text-2);
+  --color-r-3:       var(--text-3);
+
+  --text-10: 10px;
+  --text-10--line-height: 14px;
+  --text-10--letter-spacing: 0.06em;
+  --text-11: 11px;
+  --text-11--line-height: 16px;
+  --text-12: 12px;
+  --text-12--line-height: 18px;
+  --text-13: 13px;
+  --text-13--line-height: 20px;
+  --text-14: 14px;
+  --text-14--line-height: 22px;
+  --text-18: 18px;
+  --text-18--line-height: 26px;
+  --text-22: 22px;
+  --text-22--line-height: 30px;
+  --text-22--letter-spacing: -0.01em;
+  --text-30: 30px;
+  --text-30--line-height: 38px;
+  --text-30--letter-spacing: -0.02em;
 }
 
-@theme inline {
-  --color-raqib-bg:           var(--bg);
-  --color-raqib-surface:      var(--surface);
-  --color-raqib-border:       var(--border);
-  --color-raqib-accent:       var(--accent);
-  --color-raqib-accent-hover: var(--accent-hover);
-  --color-raqib-text:         var(--text);
-  --color-raqib-muted:        var(--muted);
-  --color-status-paid:        #4ADE80;
-  --color-status-pending:     #FBBF24;
-  --color-status-overdue:     #F87171;
-  --color-status-lead:        #60A5FA;
-  --color-status-lost:        #6B7280;
-  --color-status-active:      #4ADE80;
-  --color-status-draft:       #6B7280;
-  --font-family-sans: 'Inter', system-ui, sans-serif;
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+    background: var(--bg);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    color: var(--text-1);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  * { font-family: 'Inter', system-ui, sans-serif; }
 }
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: 'Inter', system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  font-size: 14px;
-}
-
-/* Tabular numbers everywhere they matter */
-.num {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
-}
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-/* Select element dark */
-select option { background-color: var(--surface); color: var(--text); }
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.fade-up { animation: fadeUp 0.3s ease forwards; }

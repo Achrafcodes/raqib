@@ -321,27 +321,32 @@ VITE_API_URL=http://localhost:5000
 ## Current Build Phase
 ```
 Phase 1 — Backend Foundation:
-- [ ] server.js + MongoDB connection
-- [ ] User model + auth routes (register, login, verify)
-- [ ] JWT middleware
-- [ ] Test auth endpoints
+- [x] server.ts + MongoDB connection (TypeScript, tsx watch)
+- [x] User model + auth routes (register, login, /me)
+- [x] JWT middleware (authMiddleware, req.user injection)
+- [x] Test auth endpoints (201 register, 200 login confirmed)
 
 Phase 2 — Core Models & Routes:
-- [ ] Client CRUD
-- [ ] Project CRUD
-- [ ] Invoice CRUD
-- [ ] Reminder CRUD
-- [ ] Dashboard stats endpoint
+- [x] Client CRUD (5 routes, userId-filtered)
+- [x] Project CRUD (5 routes, populated clientId)
+- [x] Invoice CRUD (5 routes, auto invoiceNumber INV-001)
+- [x] Reminder CRUD (5 routes + PATCH /done)
+- [x] Dashboard stats endpoint (totalEarned, activeProjects,
+      unpaidInvoices, followUpsDueToday, earningsChart,
+      pipelineBreakdown, recentActivity)
 
 Phase 3 — Frontend:
-- [ ] Vite + React + Tailwind setup
-- [ ] AuthContext + protected routes
-- [ ] Layout + Navbar
-- [ ] Dashboard page
-- [ ] Clients page
-- [ ] Projects page
-- [ ] Invoices page
-- [ ] Reminders page
+- [x] Vite + React + TypeScript + Tailwind v4 setup
+- [x] AuthContext + protected routes (JWT, auto 401 redirect)
+- [x] Layout + Navbar (active bottom-border indicator)
+- [x] Sidebar (This Month, Quick Actions, Follow-ups, Active Projects)
+- [x] Dashboard page (unified stat bar + count-up + charts)
+- [x] Clients page (full CRUD + status filter)
+- [x] Projects page (full CRUD + status filter)
+- [x] Invoices page (full CRUD + line items + tax calc)
+- [x] Reminders page (full CRUD + mark done + overdue highlight)
+- [x] Settings page (profile form + theme toggle)
+- [x] Login / Register (split-layout brand + form)
 
 Phase 4 — Polish:
 - [ ] PDF invoice (pdf-lib)

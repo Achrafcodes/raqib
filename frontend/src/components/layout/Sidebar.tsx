@@ -1,125 +1,110 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../../utils/api';
-import type { DashboardStats, Reminder, Project } from '../../types';
-import Avatar from '../ui/Avatar';
+const QUICK_ACTIONS = [
+  { icon: '＋', label: 'New Client' },
+  { icon: '📁', label: 'New Project' },
+  { icon: '📄', label: 'Invoice' },
+  { icon: '🔔', label: 'Reminder' },
+];
 
-const QuickAction = ({ label, onClick }: { label: string; onClick: () => void }) => (
-  <button
-    onClick={onClick}
-    className="flex items-center justify-between px-3 py-2.5 border border-raqib-border rounded-[4px] hover:border-raqib-accent transition-colors group w-full"
-  >
-    <span className="text-[12px] text-raqib-muted group-hover:text-raqib-text transition-colors">{label}</span>
-    <span className="text-raqib-muted group-hover:text-raqib-accent transition-colors text-[14px] leading-none">+</span>
-  </button>
-);
+const FOLLOW_UPS = [
+  { name: 'Ahmed S.', time: 'Follow up today', bar: 'var(--overdue)', pct: 90 },
+  { name: 'Sara M.', time: 'Tomorrow', bar: 'var(--pending)', pct: 55 },
+  { name: 'John D.', time: 'In 3 days', bar: 'var(--paid)', pct: 25 },
+];
 
-const SectionLabel = ({ children }: { children: string }) => (
-  <p className="text-[10px] font-medium text-raqib-muted uppercase tracking-[0.12em] mb-3">{children}</p>
-);
+const ACTIVE_PROJECTS = [
+  { letter: 'B', name: 'Brand Identity', client: 'Ahmed S.', pct: 80 },
+  { letter: 'W', name: 'Web Dev', client: 'Sara M.', pct: 45 },
+  { letter: 'S', name: 'SEO Campaign', client: 'John D.', pct: 20 },
+];
+
+const LABEL = 'text-[10px] font-medium text-r-3 uppercase tracking-[0.08em]';
 
 export default function Sidebar() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    api.get('/api/dashboard/stats').then((r) => setStats(r.data.data));
-    api.get('/api/reminders').then((r) => setReminders(r.data.data.filter((rem: Reminder) => !rem.isDone).slice(0, 3)));
-    api.get('/api/projects').then((r) => setProjects(r.data.data.filter((p: Project) => p.status === 'in-progress').slice(0, 3)));
-  }, []);
-
-  const formatDue = (date: string) => {
-    const d = new Date(date);
-    const now = new Date();
-    const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
-    if (d.toDateString() === now.toDateString())
-      return `Today ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    if (d.toDateString() === tomorrow.toDateString())
-      return `Tomorrow`;
-    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  };
-
   return (
-    <aside className="w-60 flex-shrink-0 border-l border-raqib-border overflow-y-auto">
-      <div className="flex flex-col divide-y divide-raqib-border">
-
-        {/* This Month */}
-        <div className="px-5 py-5">
-          <SectionLabel>This Month</SectionLabel>
-          <p className="num text-[28px] font-bold text-raqib-text leading-none mb-1">
-            ${stats ? stats.totalEarned.toLocaleString() : '—'}
-          </p>
-          <p className="text-[11px] text-raqib-accent mb-3">+18% vs last month</p>
-          <div className="w-full h-[2px] bg-raqib-border rounded-full">
-            <div className="h-full bg-raqib-accent rounded-full transition-all duration-1000" style={{ width: '72%' }} />
-          </div>
+    <aside className="w-[248px] shrink-0 bg-r-bg border-l border-r-border px-5 py-6 overflow-y-auto flex flex-col gap-6">
+      {/* SECTION 1 — THIS MONTH (teal/green card) */}
+      <div
+        className="rounded-[8px] p-5 border border-[#2A5C4A] overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #1E5C45 0%, #143A2E 100%)' }}
+      >
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#9FE9C8]">This Month</span>
+          <span className="text-[10px] text-[#9FE9C8]">Jan 2026</span>
         </div>
-
-        {/* Quick Actions */}
-        <div className="px-5 py-5">
-          <SectionLabel>Quick Actions</SectionLabel>
-          <div className="flex flex-col gap-2">
-            <QuickAction label="New Client"   onClick={() => navigate('/clients')} />
-            <QuickAction label="New Project"  onClick={() => navigate('/projects')} />
-            <QuickAction label="New Invoice"  onClick={() => navigate('/invoices')} />
-            <QuickAction label="Set Reminder" onClick={() => navigate('/reminders')} />
-          </div>
+        <p className="text-[28px] font-bold text-white tabular-nums" style={{ letterSpacing: '-0.02em' }}>
+          $4,200
+        </p>
+        <p className="text-[11px] text-[#9FE9C8] mt-1">↗ +18% vs last month</p>
+        <div className="mt-4 h-[3px] w-full bg-[#0F2C22] rounded-full">
+          <div className="h-full bg-r-accent rounded-full" style={{ width: '60%' }} />
         </div>
+        <p className="text-[10px] text-[#9FE9C8] mt-[6px]">60% of monthly target</p>
+      </div>
 
-        {/* Follow-ups */}
-        <div className="px-5 py-5">
-          <SectionLabel>Follow-ups</SectionLabel>
-          {reminders.length === 0
-            ? <p className="text-[12px] text-raqib-muted">No upcoming</p>
-            : reminders.map((rem) => {
-                const name = typeof rem.clientId === 'object' && rem.clientId ? rem.clientId.name : rem.title;
-                return (
-                  <div key={rem._id} className="flex items-center justify-between py-2 border-b border-raqib-border last:border-0">
-                    <div className="flex items-center gap-2">
-                      <Avatar name={name} size="sm" />
-                      <span className="text-[12px] text-raqib-text truncate max-w-[80px]">{name}</span>
-                    </div>
-                    <span className="text-[10px] text-raqib-muted">{formatDue(rem.dueDate)}</span>
-                  </div>
-                );
-              })
-          }
+      {/* SECTION 2 — QUICK ACTIONS */}
+      <div>
+        <p className={`${LABEL} mb-3`}>Quick Actions</p>
+        <div className="grid grid-cols-2 gap-[8px]">
+          {QUICK_ACTIONS.map((a) => (
+            <div
+              key={a.label}
+              className="bg-r-surface border border-r-border rounded-[6px] p-4 flex flex-col items-center gap-2 cursor-pointer hover:border-r-b2 transition-colors"
+            >
+              <span className="text-r-accent text-[18px]">{a.icon}</span>
+              <span className="text-[11px] text-r-2 text-center">{a.label}</span>
+            </div>
+          ))}
         </div>
+      </div>
 
-        {/* Active Projects */}
-        <div className="px-5 py-5">
-          <div className="flex items-center justify-between mb-3">
-            <SectionLabel>Active Projects</SectionLabel>
-            <button onClick={() => navigate('/projects')} className="text-[10px] text-raqib-accent -mt-3">All →</button>
-          </div>
-          {projects.length === 0
-            ? <p className="text-[12px] text-raqib-muted">No active projects</p>
-            : projects.map((proj, i) => {
-                const clientName = typeof proj.clientId === 'object' ? (proj.clientId as { name: string }).name : '';
-                const pct = [72, 45, 20][i] ?? 50;
-                return (
-                  <div key={proj._id} className="mb-4 last:mb-0">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <Avatar name={proj.title} size="sm" />
-                        <div className="min-w-0">
-                          <p className="text-[12px] font-medium text-raqib-text truncate leading-none">{proj.title}</p>
-                          {clientName && <p className="text-[10px] text-raqib-muted mt-0.5">{clientName}</p>}
-                        </div>
-                      </div>
-                      <span className="num text-[11px] text-raqib-muted flex-shrink-0">{pct}%</span>
-                    </div>
-                    <div className="w-full h-[2px] bg-raqib-border rounded-full">
-                      <div className="h-full bg-raqib-accent rounded-full" style={{ width: `${pct}%` }} />
-                    </div>
-                  </div>
-                );
-              })
-          }
+      {/* SECTION 3 — FOLLOW-UPS */}
+      <div>
+        <div className="flex justify-between items-center mb-3">
+          <p className={LABEL}>Follow-ups</p>
+          <span className="text-r-3 text-[14px] cursor-pointer">+</span>
         </div>
+        <div className="flex flex-col gap-[8px]">
+          {FOLLOW_UPS.map((f) => (
+            <div
+              key={f.name}
+              className="bg-r-surface border border-r-border rounded-[6px] p-3 flex flex-col gap-[6px]"
+              style={{ borderLeft: `2px solid ${f.bar}` }}
+            >
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-[12px] font-medium text-r-1 truncate">{f.name}</span>
+                <span className="text-[10px] text-r-3 shrink-0 whitespace-nowrap">{f.time}</span>
+              </div>
+              <div className="h-[2px] w-full bg-r-border rounded-full">
+                <div className="h-full rounded-full" style={{ width: `${f.pct}%`, background: f.bar }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
+      {/* SECTION 4 — ACTIVE PROJECTS */}
+      <div>
+        <div className="flex justify-between items-center mb-3">
+          <p className={LABEL}>Active Projects</p>
+          <span className="text-[11px] text-r-accent cursor-pointer">All →</span>
+        </div>
+        <div className="flex flex-col gap-[12px]">
+          {ACTIVE_PROJECTS.map((p) => (
+            <div key={p.name} className="flex items-center gap-[8px]">
+              <div className="w-[26px] h-[26px] bg-r-s2 border border-r-border rounded-[5px] flex items-center justify-center text-[10px] font-semibold text-r-accent shrink-0">
+                {p.letter}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-medium text-r-1 truncate">{p.name}</p>
+                <p className="text-[10px] text-r-3">{p.client}</p>
+                <div className="mt-[4px] h-[2px] bg-r-border rounded-full">
+                  <div className="h-full bg-r-accent rounded-full" style={{ width: `${p.pct}%` }} />
+                </div>
+              </div>
+              <span className="text-[10px] text-r-3 ml-1">{p.pct}%</span>
+            </div>
+          ))}
+        </div>
       </div>
     </aside>
   );

@@ -1,152 +1,114 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Layout from '../components/layout/Layout';
 import StatCard from '../components/ui/StatCard';
 import StatusBadge from '../components/ui/StatusBadge';
 import Avatar from '../components/ui/Avatar';
 import EarningsChart from '../components/charts/EarningsChart';
 import PipelineChart from '../components/charts/PipelineChart';
-import type { DashboardStats, Invoice, Client, Project } from '../types';
-import api from '../utils/api';
-import { useAuth } from '../hooks/useAuth';
+
+const STATS = [
+  { label: 'Total Earned', value: '$12,400', trendValue: '↗ 24%', trendText: 'this month', trendColor: 'var(--paid)' },
+  { label: 'Active Projects', value: '5', trendValue: '↗ +2 new', trendText: 'this month', trendColor: 'var(--paid)' },
+  { label: 'Unpaid Invoices', value: '$2,800', trendValue: '↘ 4 unpaid', trendText: 'invoices', trendColor: 'var(--overdue)' },
+  { label: 'Follow-ups Due', value: '3', trendValue: '↘ today', trendText: 'due today', trendColor: 'var(--overdue)' },
+];
+
+type Status = 'paid' | 'pending' | 'overdue' | 'lead' | 'lost';
+
+const ACTIVITY: { client: string; project: string; amount: string; status: Status }[] = [
+  { client: 'Ahmed Samir', project: 'Brand Identity', amount: '$1,200', status: 'paid' },
+  { client: 'Sara Mendez', project: 'Web Development', amount: '$3,400', status: 'pending' },
+  { client: 'John Davies', project: 'SEO Campaign', amount: '$800', status: 'overdue' },
+  { client: 'Lina Chen', project: 'Mobile App UI', amount: '$2,100', status: 'paid' },
+  { client: 'Omar Hassan', project: 'Content Strategy', amount: '$650', status: 'lead' },
+];
 
 export default function Dashboard() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [chartMode, setChartMode] = useState<'Monthly' | 'Yearly'>('Monthly');
-
-  useEffect(() => {
-    api.get('/api/dashboard/stats').then((r) => setStats(r.data.data));
-    api.get('/api/invoices').then((r) => setInvoices(r.data.data.slice(0, 6)));
-  }, []);
-
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-
-  const getClientName = (inv: Invoice) =>
-    typeof inv.clientId === 'object' && inv.clientId ? (inv.clientId as Client).name : '—';
-  const getProjectTitle = (inv: Invoice) =>
-    inv.projectId && typeof inv.projectId === 'object' ? (inv.projectId as Project).title : '—';
+  const today = new Date().toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
   return (
-    <Layout>
-      {/* Header */}
-      <div className="flex items-baseline gap-4 mb-5 fade-up">
-        <h1 className="text-[18px] font-semibold text-raqib-text tracking-tight">
-          {user ? `${user.name.split(' ')[0]}'s Dashboard` : 'Dashboard'}
-        </h1>
-        <span className="text-[12px] text-raqib-muted">{today}</span>
-      </div>
-
-      {/* Stat bar — signature element: one unified block, hairline dividers */}
-      <div className="bg-raqib-surface border border-raqib-border rounded-[6px] grid grid-cols-4 divide-x divide-raqib-border mb-5 fade-up">
-        <StatCard
-          label="Total Earned"
-          prefix="$"
-          value={stats?.totalEarned ?? 0}
-          sub="↑ 24% this month"
-          subColor="accent"
-        />
-        <StatCard
-          label="Active Projects"
-          value={stats?.activeProjects ?? 0}
-          sub="+2 new this month"
-          subColor="muted"
-        />
-        <StatCard
-          label="Unpaid Invoices"
-          value={stats?.unpaidInvoices ?? 0}
-          sub="awaiting payment"
-          subColor="overdue"
-        />
-        <StatCard
-          label="Follow-ups Due"
-          value={stats?.followUpsDueToday ?? 0}
-          sub="due today"
-          subColor="muted"
-        />
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-[3fr_2fr] gap-4 mb-5 fade-up">
-        <div className="bg-raqib-surface border border-raqib-border rounded-[6px] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-[10px] font-medium text-raqib-muted uppercase tracking-[0.12em]">Earnings Overview</p>
-              {stats && (
-                <p className="text-[12px] text-raqib-muted mt-0.5">
-                  ${stats.totalEarned.toLocaleString()} total{' '}
-                  <span className="text-raqib-accent">+24%</span>
-                </p>
-              )}
-            </div>
-            <div className="flex border border-raqib-border rounded-[4px] overflow-hidden">
-              {(['Monthly', 'Yearly'] as const).map((m) => (
-                <button key={m} onClick={() => setChartMode(m)}
-                  className={`text-[11px] font-medium px-3 py-1.5 transition-colors ${
-                    chartMode === m ? 'bg-raqib-accent text-[#0B0F1A]' : 'text-raqib-muted hover:text-raqib-text'
-                  }`}>
-                  {m}
-                </button>
-              ))}
-            </div>
-          </div>
-          {stats
-            ? <EarningsChart data={stats.earningsChart} />
-            : <div className="h-[180px] flex items-center justify-center"><p className="text-[12px] text-raqib-muted">Loading…</p></div>
-          }
+    <div className="flex flex-col gap-8">
+      {/* A. PAGE HEADER */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-[20px] font-semibold text-r-1">Dashboard</h1>
+          <p className="text-[12px] text-r-3 mt-[2px]">{today}</p>
         </div>
-
-        <div className="bg-raqib-surface border border-raqib-border rounded-[6px] p-5">
-          <p className="text-[10px] font-medium text-raqib-muted uppercase tracking-[0.12em] mb-1">Client Pipeline</p>
-          <p className="text-[12px] text-raqib-muted mb-4">Stage breakdown</p>
-          <div className="h-[180px]">
-            {stats
-              ? <PipelineChart data={stats.pipelineBreakdown} />
-              : <div className="flex items-center justify-center h-full"><p className="text-[12px] text-raqib-muted">Loading…</p></div>
-            }
-          </div>
+        <div className="flex items-center gap-2 bg-r-surface border border-r-border rounded-[8px] px-3 py-[7px] w-[240px]">
+          <span className="text-[13px] text-r-3">🔍</span>
+          <input
+            placeholder="Search..."
+            className="bg-transparent outline-none text-[12px] text-r-1 placeholder:text-r-3 w-full"
+          />
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="bg-raqib-surface border border-raqib-border rounded-[6px] fade-up">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-raqib-border">
-          <p className="text-[10px] font-medium text-raqib-muted uppercase tracking-[0.12em]">Recent Activity</p>
-          <button onClick={() => navigate('/invoices')} className="text-[11px] text-raqib-accent hover:underline">View all →</button>
+      {/* B. STAT CARDS ROW */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        {STATS.map((s) => (
+          <StatCard key={s.label} {...s} />
+        ))}
+      </div>
+
+      {/* C. CHARTS ROW */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-3">
+          <EarningsChart />
         </div>
-        <table className="w-full">
+        <div className="lg:col-span-2">
+          <PipelineChart />
+        </div>
+      </div>
+
+      {/* D. RECENT ACTIVITY TABLE */}
+      <div className="bg-r-surface border border-r-border rounded-[10px] p-6">
+        <div className="flex justify-between items-center mb-5">
+          <span className="text-[10px] font-medium text-r-3 uppercase tracking-[0.08em]">Recent Activity</span>
+          <span className="text-[11px] text-r-accent cursor-pointer">View all →</span>
+        </div>
+
+        <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-raqib-border">
-              {['Client', 'Project', 'Amount', 'Status', ''].map((h) => (
-                <th key={h} className="text-left text-[10px] font-medium text-raqib-muted uppercase tracking-[0.12em] px-5 py-2.5">{h}</th>
+            <tr>
+              {['Client', 'Project', 'Amount', 'Status', 'Action'].map((h) => (
+                <th
+                  key={h}
+                  className="text-[10px] font-medium text-r-3 uppercase tracking-[0.06em] text-left pb-3 border-b border-r-border"
+                >
+                  {h}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {invoices.length === 0 && (
-              <tr><td colSpan={5} className="px-5 py-8 text-[13px] text-raqib-muted text-center">No invoices yet — create your first</td></tr>
-            )}
-            {invoices.map((inv) => (
-              <tr key={inv._id} className="border-b border-raqib-border last:border-0 hover:bg-raqib-bg transition-colors">
-                <td className="px-5 py-3">
-                  <div className="flex items-center gap-2.5">
-                    <Avatar name={getClientName(inv)} size="sm" />
-                    <span className="text-[13px] text-raqib-text">{getClientName(inv)}</span>
+            {ACTIVITY.map((row, i) => (
+              <tr key={row.client} className="group hover:bg-r-s2 transition-colors duration-75">
+                <td className={`py-[13px] ${i < ACTIVITY.length - 1 ? 'border-b border-r-border' : ''}`}>
+                  <div className="flex items-center gap-[10px]">
+                    <Avatar name={row.client} />
+                    <span className="text-[13px] font-medium text-r-1">{row.client}</span>
                   </div>
                 </td>
-                <td className="px-5 py-3 text-[13px] text-raqib-muted">{getProjectTitle(inv)}</td>
-                <td className="px-5 py-3 num text-[13px] text-raqib-text">${inv.total.toLocaleString()}</td>
-                <td className="px-5 py-3"><StatusBadge status={inv.status} /></td>
-                <td className="px-5 py-3">
-                  <button onClick={() => navigate('/invoices')} className="text-[13px] text-raqib-muted hover:text-raqib-text transition-colors tracking-widest">···</button>
+                <td className={`py-[13px] text-[13px] text-r-3 ${i < ACTIVITY.length - 1 ? 'border-b border-r-border' : ''}`}>
+                  {row.project}
+                </td>
+                <td className={`py-[13px] text-[13px] text-r-1 tabular-nums ${i < ACTIVITY.length - 1 ? 'border-b border-r-border' : ''}`}>
+                  {row.amount}
+                </td>
+                <td className={`py-[13px] ${i < ACTIVITY.length - 1 ? 'border-b border-r-border' : ''}`}>
+                  <StatusBadge status={row.status} />
+                </td>
+                <td className={`py-[13px] ${i < ACTIVITY.length - 1 ? 'border-b border-r-border' : ''}`}>
+                  <span className="text-r-3 hover:text-r-1 cursor-pointer opacity-0 group-hover:opacity-100">···</span>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-    </Layout>
+    </div>
   );
 }
