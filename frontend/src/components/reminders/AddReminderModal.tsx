@@ -7,6 +7,62 @@ import type { Client } from '../../types';
 interface Props { onClose: () => void }
 
 const INPUT = 'w-full bg-r-bg border border-r-border rounded-[8px] px-3 py-[9px] text-[13px] text-r-1 placeholder:text-r-3 outline-none focus:border-r-accent transition-colors';
+const SEL = 'bg-r-bg border border-r-border rounded-[8px] px-2 py-[9px] text-[13px] text-r-1 outline-none focus:border-r-accent transition-colors text-center cursor-pointer';
+
+function DuePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const d = value ? new Date(value) : new Date();
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  const hour = d.getHours();
+  const minute = d.getMinutes();
+
+  const update = (y: number, mo: number, da: number, h: number, mi: number) => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    onChange(`${y}-${pad(mo)}-${pad(da)}T${pad(h)}:${pad(mi)}`);
+  };
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const currentYear = new Date().getFullYear();
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  return (
+    <div className="flex items-center gap-[6px]">
+      {/* Day */}
+      <select value={day} onChange={(e) => update(year, month, +e.target.value, hour, minute)} className={SEL + ' w-[58px]'}>
+        {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => (
+          <option key={d} value={d}>{String(d).padStart(2,'0')}</option>
+        ))}
+      </select>
+      <span className="text-r-3 text-[13px]">/</span>
+      {/* Month */}
+      <select value={month} onChange={(e) => update(year, +e.target.value, Math.min(day, new Date(year, +e.target.value, 0).getDate()), hour, minute)} className={SEL + ' w-[58px]'}>
+        {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+      </select>
+      <span className="text-r-3 text-[13px]">/</span>
+      {/* Year */}
+      <select value={year} onChange={(e) => update(+e.target.value, month, day, hour, minute)} className={SEL + ' w-[72px]'}>
+        {[currentYear, currentYear + 1, currentYear + 2].map((y) => (
+          <option key={y} value={y}>{y}</option>
+        ))}
+      </select>
+      <span className="text-r-3 text-[13px] mx-1">@</span>
+      {/* Hour */}
+      <select value={hour} onChange={(e) => update(year, month, day, +e.target.value, minute)} className={SEL + ' w-[52px]'}>
+        {Array.from({ length: 24 }, (_, i) => i).map((h) => (
+          <option key={h} value={h}>{String(h).padStart(2,'0')}</option>
+        ))}
+      </select>
+      <span className="text-r-3 text-[13px]">:</span>
+      {/* Minute */}
+      <select value={minute} onChange={(e) => update(year, month, day, hour, +e.target.value)} className={SEL + ' w-[52px]'}>
+        {[0, 15, 30, 45].map((m) => (
+          <option key={m} value={m}>{String(m).padStart(2,'0')}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -20,7 +76,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export default function AddReminderModal({ onClose }: Props) {
   const { refresh } = useRefresh();
   const [clients, setClients] = useState<Client[]>([]);
-  const [form, setForm] = useState({ title: '', note: '', clientId: '', dueDate: '' });
+  const defaultDue = (() => {
+    const now = new Date();
+    now.setMinutes(0, 0, 0);
+    now.setHours(now.getHours() + 1);
+    return now.toISOString().slice(0, 16);
+  })();
+  const [form, setForm] = useState({ title: '', note: '', clientId: '', dueDate: defaultDue });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -57,17 +119,17 @@ export default function AddReminderModal({ onClose }: Props) {
           <input value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="e.g. Follow up with client" required className={INPUT} />
         </Field>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Client">
-            <select value={form.clientId} onChange={(e) => set('clientId', e.target.value)} className={INPUT}>
-              <option value="">No client</option>
-              {clients.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
-            </select>
-          </Field>
-          <Field label="Due Date *">
-            <input type="datetime-local" value={form.dueDate} onChange={(e) => set('dueDate', e.target.value)} required className={INPUT} />
-          </Field>
-        </div>
+        <Field label="Client">
+          <select value={form.clientId} onChange={(e) => set('clientId', e.target.value)} className={INPUT}>
+            <option value="">No client</option>
+            {clients.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+          </select>
+        </Field>
+
+        {/* Due date — day / month / year + hour : minute */}
+        <Field label="Due Date *">
+          <DuePicker value={form.dueDate} onChange={(v) => set('dueDate', v)} />
+        </Field>
 
         <Field label="Note">
           <textarea value={form.note} onChange={(e) => set('note', e.target.value)} placeholder="Any additional notes..." rows={3} className={INPUT + ' resize-none'} />
