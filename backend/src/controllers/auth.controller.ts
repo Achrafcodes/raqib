@@ -3,10 +3,26 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { AuthRequest } from '../types/index.js';
 
+const COOKIE_OPTS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+};
+
 const signToken = (id: string, email: string): string =>
   jwt.sign({ id, email }, process.env.JWT_SECRET as string, {
     expiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   } as jwt.SignOptions);
+
+const userPayload = (user: { _id: unknown; name: string; email: string; freelanceTitle?: string; currency?: string; isEmailVerified?: boolean }) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  freelanceTitle: user.freelanceTitle,
+  currency: user.currency,
+  isEmailVerified: user.isEmailVerified,
+});
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -26,20 +42,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const user = await User.create({ name, email, password, freelanceTitle, currency });
     const token = signToken(user._id.toString(), user.email);
 
-    res.status(201).json({
-      success: true,
-      data: {
-        token,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          freelanceTitle: user.freelanceTitle,
-          currency: user.currency,
-          isEmailVerified: user.isEmailVerified,
-        },
-      },
-    });
+    res.cookie('token', token, COOKIE_OPTS);
+    res.status(201).json({ success: true, data: { user: userPayload(user) } });
   } catch {
     res.status(500).json({ success: false, message: 'Registration failed' });
   }
@@ -62,23 +66,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const token = signToken(user._id.toString(), user.email);
 
-    res.json({
-      success: true,
-      data: {
-        token,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          freelanceTitle: user.freelanceTitle,
-          currency: user.currency,
-          isEmailVerified: user.isEmailVerified,
-        },
-      },
-    });
+    res.cookie('token', token, COOKIE_OPTS);
+    res.json({ success: true, data: { user: userPayload(user) } });
   } catch {
     res.status(500).json({ success: false, message: 'Login failed' });
   }
+};
+
+export const logout = (_req: Request, res: Response): void => {
+  res.clearCookie('token', COOKIE_OPTS);
+  res.json({ success: true, data: null });
 };
 
 export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {

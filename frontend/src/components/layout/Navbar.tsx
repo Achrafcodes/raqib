@@ -44,7 +44,7 @@ function RaqibLogo() {
 
 export default function Navbar() {
   const [active, setActive] = useState('Dashboard');
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const avatarText = user?.name
     ? user.name.split(' ').slice(0, 2).map((p) => p[0]).join('').toUpperCase()
     : 'YO';
@@ -103,8 +103,12 @@ export default function Navbar() {
         {/* Divider */}
         <div className="w-px h-5 bg-r-border mx-1" />
 
-        {/* Avatar */}
-        <div className="w-9 h-9 rounded-full bg-r-accent text-[12px] font-bold text-[#0C0E14] flex items-center justify-center cursor-pointer select-none">
+        {/* Avatar — click to logout */}
+        <div
+          title={`${user?.name ?? ''} — click to sign out`}
+          onClick={() => logout()}
+          className="w-9 h-9 rounded-full bg-r-accent text-[12px] font-bold text-[#0C0E14] flex items-center justify-center cursor-pointer select-none hover:opacity-80 transition-opacity"
+        >
           {avatarText}
         </div>
       </div>

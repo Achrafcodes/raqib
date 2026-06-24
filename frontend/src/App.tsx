@@ -4,19 +4,26 @@ import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import LoadingScreen from './components/ui/LoadingScreen';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { token, loading } = useAuth();
-  if (loading) return <div className="h-screen flex items-center justify-center text-r-3 text-[13px]">Loading…</div>;
-  return token ? <>{children}</> : <Navigate to="/login" replace />;
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  return user ? <>{children}</> : <Navigate to="/login" replace />;
+}
+
+function GuestRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  return !user ? <>{children}</> : <Navigate to="/" replace />;
 }
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+        <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
         <Route
           path="/*"
           element={

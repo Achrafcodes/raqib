@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import authRoutes from './src/routes/auth.routes.js';
 import clientRoutes from './src/routes/client.routes.js';
@@ -13,8 +14,12 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({ origin: (origin, cb) => cb(null, true) }));
+app.use(cors({
+  origin: process.env.CLIENT_URL ?? 'http://localhost:5173',
+  credentials: true,
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'Raqib API is running' });

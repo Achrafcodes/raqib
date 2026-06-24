@@ -8,14 +8,18 @@ interface JwtPayload {
 }
 
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  const header = req.headers.authorization;
+  // Accept token from httpOnly cookie OR Authorization header
+  const cookieToken = req.cookies?.token;
+  const headerToken = req.headers.authorization?.startsWith('Bearer ')
+    ? req.headers.authorization.split(' ')[1]
+    : null;
 
-  if (!header?.startsWith('Bearer ')) {
+  const token = cookieToken ?? headerToken;
+
+  if (!token) {
     res.status(401).json({ success: false, message: 'No token provided' });
     return;
   }
-
-  const token = header.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;

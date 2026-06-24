@@ -4,10 +4,9 @@ import type { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (data: { name: string; email: string; password: string; freelanceTitle?: string }) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
 }
 
@@ -15,46 +14,33 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
+  // On mount, verify cookie by calling /me
   useEffect(() => {
-    const saved = localStorage.getItem('theme') || 'dark';
-    if (saved === 'light') document.documentElement.classList.add('light');
-  }, []);
-
-  useEffect(() => {
-    if (!token) { setLoading(false); return; }
     api.get('/api/auth/me')
       .then((res) => setUser(res.data.data))
-      .catch(() => { setToken(null); localStorage.removeItem('token'); })
+      .catch(() => setUser(null))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, []);
 
   const login = async (email: string, password: string) => {
     const res = await api.post('/api/auth/login', { email, password });
-    const { token: t, user: u } = res.data.data;
-    localStorage.setItem('token', t);
-    setToken(t);
-    setUser(u);
+    setUser(res.data.data.user);
   };
 
   const register = async (data: { name: string; email: string; password: string; freelanceTitle?: string }) => {
     const res = await api.post('/api/auth/register', data);
-    const { token: t, user: u } = res.data.data;
-    localStorage.setItem('token', t);
-    setToken(t);
-    setUser(u);
+    setUser(res.data.data.user);
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
+  const logout = async () => {
+    await api.post('/api/auth/logout');
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
