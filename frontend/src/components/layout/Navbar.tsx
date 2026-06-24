@@ -5,29 +5,35 @@ const TABS = ['Dashboard', 'Clients', 'Projects', 'Invoices', 'Reports'];
 
 function RaqibLogo() {
   return (
-    <div className="flex items-center gap-[10px]">
-      {/* Eye mark — "Keep an eye on your business" */}
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-        {/* outer eye shape */}
-        <path
-          d="M4 16C4 16 9 7 16 7C23 7 28 16 28 16C28 16 23 25 16 25C9 25 4 16 4 16Z"
-          fill="#0C0E14"
-          stroke="#4ADE80"
-          strokeWidth="1.8"
-          strokeLinejoin="round"
-        />
-        {/* iris ring */}
-        <circle cx="16" cy="16" r="5" fill="#0C0E14" stroke="#4ADE80" strokeWidth="1.6" />
-        {/* pupil */}
-        <circle cx="16" cy="16" r="2.2" fill="#4ADE80" />
-        {/* glint */}
-        <circle cx="18" cy="14" r="0.9" fill="#0C0E14" opacity="0.7" />
-      </svg>
+    <div className="flex items-center gap-3">
+      {/* Chart spark mark */}
+      <div
+        className="w-[36px] h-[36px] rounded-[9px] flex items-center justify-center shrink-0"
+        style={{ background: 'var(--surface)', border: '1px solid var(--border-2)' }}
+      >
+        <svg width="22" height="16" viewBox="0 0 22 16" fill="none">
+          {/* rising spark line — mirrors the earnings chart */}
+          <polyline
+            points="1,13 5,9 8,11 12,5 16,7 21,1"
+            stroke="#4ADE80"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* peak dot */}
+          <circle cx="21" cy="1" r="2" fill="#4ADE80" />
+          {/* subtle baseline */}
+          <line x1="1" y1="15" x2="21" y2="15" stroke="#2D3748" strokeWidth="1" strokeLinecap="round" />
+        </svg>
+      </div>
 
       {/* Wordmark */}
-      <div className="flex flex-col leading-none">
-        <span className="text-[17px] font-bold text-r-1 tracking-tight">Raqib</span>
-        <span className="text-[9px] font-medium tracking-[0.12em] uppercase" style={{ color: 'var(--accent)' }}>
+      <div className="flex flex-col leading-none gap-[3px]">
+        <span className="text-[17px] font-bold text-r-1 tracking-tight leading-none">Raqib</span>
+        <span
+          className="text-[9px] font-semibold tracking-[0.14em] uppercase leading-none"
+          style={{ color: 'var(--accent)', opacity: 0.7 }}
+        >
           Freelancer CRM
         </span>
       </div>
