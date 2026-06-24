@@ -27,10 +27,10 @@ export default function Dashboard() {
 
   const statCards = stats
     ? [
-        { label: 'Total Earned',    value: fmt(stats.totalEarned),    trendValue: '24%',       trendText: 'this month',    trendColor: 'var(--paid)',    trendUp: true  },
-        { label: 'Active Projects', value: String(stats.activeProjects), trendValue: 'active',  trendText: 'projects',      trendColor: 'var(--paid)',    trendUp: true  },
-        { label: 'Unpaid Invoices', value: fmt(stats.unpaidInvoices),  trendValue: 'unpaid',    trendText: 'invoices',      trendColor: 'var(--overdue)', trendUp: false },
-        { label: 'Follow-ups Due',  value: String(stats.followUpsDueToday), trendValue: 'due today', trendText: '',         trendColor: 'var(--overdue)', trendUp: false },
+        { label: 'Total Earned',    value: fmt(stats.totalEarned),           trendValue: 'all time',   trendText: '',         trendColor: 'var(--paid)',    trendUp: true  },
+        { label: 'Active Projects', value: String(stats.activeProjects),      trendValue: 'in progress', trendText: '',       trendColor: 'var(--paid)',    trendUp: true  },
+        { label: 'Unpaid Invoices', value: fmt(stats.unpaidInvoices),         trendValue: 'outstanding', trendText: '',      trendColor: stats.unpaidInvoices > 0 ? 'var(--overdue)' : 'var(--paid)', trendUp: stats.unpaidInvoices === 0 },
+        { label: 'Follow-ups Due',  value: String(stats.followUpsDueToday),   trendValue: 'due today',  trendText: '',        trendColor: stats.followUpsDueToday > 0 ? 'var(--overdue)' : 'var(--paid)', trendUp: stats.followUpsDueToday === 0 },
       ]
     : null;
 

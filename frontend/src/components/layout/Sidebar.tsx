@@ -78,10 +78,9 @@ export default function Sidebar() {
         <p className="font-bold text-white tabular-nums leading-none" style={{ fontSize: '38px', letterSpacing: '-0.03em' }}>
           ${thisMonth.toLocaleString()}
         </p>
-        <div className="mt-4 h-[4px] w-full bg-[#0F2C22] rounded-full">
-          <div className="h-full bg-r-accent rounded-full" style={{ width: '60%' }} />
-        </div>
-        <p className="text-[12px] text-[#9FE9C8] opacity-70 mt-[7px]">60% of monthly target</p>
+        <p className="text-[13px] font-medium text-[#9FE9C8] mt-3">
+          {thisMonth === 0 ? 'No earnings yet this month' : 'earned this month'}
+        </p>
       </div>
 
       {/* QUICK ACTIONS */}
