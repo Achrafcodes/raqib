@@ -6,6 +6,7 @@ import PipelineChart from '../components/charts/PipelineChart';
 import { SearchIcon } from '../components/ui/Icons';
 import api from '../utils/api';
 import type { DashboardStats } from '../types';
+import { useRefresh } from '../context/RefreshContext';
 
 type InvoiceStatus = 'paid' | 'pending' | 'overdue' | 'lead' | 'lost';
 
@@ -16,10 +17,11 @@ function fmt(n: number) {
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [search, setSearch] = useState('');
+  const { tick } = useRefresh();
 
   useEffect(() => {
     api.get('/api/dashboard/stats').then((res) => setStats(res.data.data));
-  }, []);
+  }, [tick]);
 
   const today = new Date().toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',

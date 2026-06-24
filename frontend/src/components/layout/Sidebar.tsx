@@ -3,6 +3,7 @@ import { UserPlusIcon, FolderIcon, FileTextIcon, ClockIcon, PlusIcon } from '../
 import api from '../../utils/api';
 import type { Reminder, Project } from '../../types';
 import AddClientModal from '../clients/AddClientModal';
+import { useRefresh } from '../../context/RefreshContext';
 
 type Action = { icon: React.ReactNode; label: string; key: string };
 const QUICK_ACTIONS: Action[] = [
@@ -48,13 +49,7 @@ export default function Sidebar() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [thisMonth, setThisMonth] = useState(0);
   const [showAddClient, setShowAddClient] = useState(false);
-
-  const refresh = () => {
-    api.get('/api/projects').then((res) => {
-      const all: Project[] = res.data.data;
-      setProjects(all.filter((p) => p.status === 'in-progress').slice(0, 3));
-    });
-  };
+  const { tick, refresh } = useRefresh();
 
   useEffect(() => {
     api.get('/api/reminders').then((res) => {
@@ -69,7 +64,7 @@ export default function Sidebar() {
       const chart: { month: string; earnings: number }[] = res.data.data.earningsChart;
       if (chart.length) setThisMonth(chart[chart.length - 1].earnings);
     });
-  }, []);
+  }, [tick]);
 
   return (
     <>

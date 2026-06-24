@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import Modal from '../ui/Modal';
 import api from '../../utils/api';
+import { useRefresh } from '../../context/RefreshContext';
 
 interface Props {
   onClose: () => void;
@@ -11,6 +12,7 @@ const SOURCES = ['upwork', 'fiverr', 'instagram', 'referral', 'cold-email', 'oth
 const STATUSES = ['lead', 'negotiating', 'active', 'done', 'lost'];
 
 export default function AddClientModal({ onClose, onCreated }: Props) {
+  const { refresh } = useRefresh();
   const [form, setForm] = useState({
     name: '', email: '', phone: '', company: '',
     source: 'other', status: 'lead', notes: '',
@@ -27,6 +29,7 @@ export default function AddClientModal({ onClose, onCreated }: Props) {
     setLoading(true);
     try {
       await api.post('/api/clients', form);
+      refresh();
       onCreated();
       onClose();
     } catch {
