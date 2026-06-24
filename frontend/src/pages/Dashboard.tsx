@@ -1,38 +1,59 @@
+import { useState, useEffect } from 'react';
 import StatCard from '../components/ui/StatCard';
 import StatusBadge from '../components/ui/StatusBadge';
-import Avatar from '../components/ui/Avatar';
 import EarningsChart from '../components/charts/EarningsChart';
 import PipelineChart from '../components/charts/PipelineChart';
 import { SearchIcon } from '../components/ui/Icons';
+import api from '../utils/api';
+import type { DashboardStats } from '../types';
 
-const STATS = [
-  { label: 'Total Earned',    value: '$12,400', trendValue: '24%',       trendText: 'this month',    trendColor: 'var(--paid)',    trendUp: true  },
-  { label: 'Active Projects', value: '5',        trendValue: '2 new',     trendText: 'this month',    trendColor: 'var(--paid)',    trendUp: true  },
-  { label: 'Unpaid Invoices', value: '$2,800',   trendValue: '4 unpaid',  trendText: 'invoices',      trendColor: 'var(--overdue)', trendUp: false },
-  { label: 'Follow-ups Due',  value: '3',        trendValue: 'due today', trendText: '',              trendColor: 'var(--overdue)', trendUp: false },
-];
+type InvoiceStatus = 'paid' | 'pending' | 'overdue' | 'lead' | 'lost';
 
-type Status = 'paid' | 'pending' | 'overdue' | 'lead' | 'lost';
-
-const ACTIVITY: { client: string; project: string; amount: string; status: Status }[] = [
-  { client: 'Ahmed Samir', project: 'Brand Identity',   amount: '$1,200', status: 'paid'    },
-  { client: 'Sara Mendez', project: 'Web Development',  amount: '$3,400', status: 'pending' },
-  { client: 'John Davies', project: 'SEO Campaign',     amount: '$800',   status: 'overdue' },
-  { client: 'Lina Chen',   project: 'Mobile App UI',    amount: '$2,100', status: 'paid'    },
-  { client: 'Omar Hassan', project: 'Content Strategy', amount: '$650',   status: 'lead'    },
-];
+function fmt(n: number) {
+  return n >= 1000 ? `$${(n / 1000).toFixed(1).replace('.0', '')}k` : `$${n}`;
+}
 
 export default function Dashboard() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    api.get('/api/dashboard/stats').then((res) => setStats(res.data.data));
+  }, []);
+
   const today = new Date().toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
+
+  const statCards = stats
+    ? [
+        { label: 'Total Earned',    value: fmt(stats.totalEarned),    trendValue: '24%',       trendText: 'this month',    trendColor: 'var(--paid)',    trendUp: true  },
+        { label: 'Active Projects', value: String(stats.activeProjects), trendValue: 'active',  trendText: 'projects',      trendColor: 'var(--paid)',    trendUp: true  },
+        { label: 'Unpaid Invoices', value: fmt(stats.unpaidInvoices),  trendValue: 'unpaid',    trendText: 'invoices',      trendColor: 'var(--overdue)', trendUp: false },
+        { label: 'Follow-ups Due',  value: String(stats.followUpsDueToday), trendValue: 'due today', trendText: '',         trendColor: 'var(--overdue)', trendUp: false },
+      ]
+    : null;
+
+  const pipeline = stats
+    ? Object.entries(stats.pipelineBreakdown).map(([label, value]) => ({
+        label: label.charAt(0).toUpperCase() + label.slice(1),
+        value,
+        color: label === 'lead' ? '#60A5FA' : label === 'negotiating' ? '#FBBF24' : label === 'active' ? '#4ADE80' : '#8899AA',
+      }))
+    : [];
+
+  const chartData = stats?.earningsChart.map((d) => ({ month: d.month, value: d.earnings })) ?? [];
+
+  const filteredActivity = (stats?.recentActivity ?? []).filter(
+    (r) =>
+      !search ||
+      r.title.toLowerCase().includes(search.toLowerCase()) ||
+      r.type.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <div className="flex flex-col gap-5">
-      {/* A. PAGE HEADER */}
+      {/* HEADER */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-[22px] font-bold text-r-1 tracking-tight">Dashboard</h1>
@@ -41,74 +62,79 @@ export default function Dashboard() {
         <div className="flex items-center gap-2 bg-r-surface border border-r-border rounded-[8px] px-3 py-[7px] w-[240px]">
           <SearchIcon size={14} className="text-r-3 shrink-0" />
           <input
-            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search activity..."
             className="bg-transparent outline-none text-[13px] text-r-1 placeholder:text-r-3 w-full"
           />
         </div>
       </div>
 
-      {/* B. STAT CARDS ROW */}
+      {/* STAT CARDS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-[10px]">
-        {STATS.map((s) => (
-          <StatCard key={s.label} {...s} />
-        ))}
+        {statCards
+          ? statCards.map((s) => <StatCard key={s.label} {...s} />)
+          : Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-r-surface border border-r-border rounded-[8px] px-5 py-5 h-[110px] animate-pulse" />
+            ))}
       </div>
 
-      {/* C. CHARTS ROW */}
+      {/* CHARTS */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-[10px]">
         <div className="lg:col-span-3">
-          <EarningsChart />
+          <EarningsChart data={chartData} totalEarned={stats?.totalEarned ?? 0} />
         </div>
         <div className="lg:col-span-2">
-          <PipelineChart />
+          <PipelineChart segments={pipeline} />
         </div>
       </div>
 
-      {/* D. RECENT ACTIVITY TABLE */}
+      {/* RECENT ACTIVITY */}
       <div className="bg-r-surface border border-r-border rounded-[10px] p-6">
         <div className="flex justify-between items-center mb-5">
           <span className="text-[11px] font-semibold text-r-2 uppercase tracking-[0.08em]">Recent Activity</span>
           <span className="text-[12px] font-medium text-r-accent cursor-pointer hover:opacity-80 transition-opacity">View all →</span>
         </div>
 
-        <table className="w-full border-collapse">
-          <thead>
-            <tr>
-              {['Client', 'Project', 'Amount', 'Status', 'Action'].map((h) => (
-                <th
-                  key={h}
-                  className="text-[10px] font-semibold text-r-3 uppercase tracking-[0.08em] text-left pb-3 border-b border-r-border"
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {ACTIVITY.map((row, i) => (
-              <tr key={row.client} className="hover:bg-r-s2 transition-colors duration-100">
-                <td className={`py-[14px] ${i < ACTIVITY.length - 1 ? 'border-b border-r-border' : ''}`}>
-                  <div className="flex items-center gap-[10px]">
-                    <Avatar name={row.client} />
-                    <span className="text-[13px] font-semibold text-r-1">{row.client}</span>
-                  </div>
-                </td>
-                <td className={`py-[14px] text-[13px] text-r-3 ${i < ACTIVITY.length - 1 ? 'border-b border-r-border' : ''}`}>
-                  {row.project}
-                </td>
-                <td className={`py-[14px] text-[13px] font-semibold text-r-1 tabular-nums ${i < ACTIVITY.length - 1 ? 'border-b border-r-border' : ''}`}>
-                  {row.amount}
-                </td>
-                <td className={`py-[14px] ${i < ACTIVITY.length - 1 ? 'border-b border-r-border' : ''}`}>
-                  <StatusBadge status={row.status} />
-                </td>
-                <td className={`py-[14px] ${i < ACTIVITY.length - 1 ? 'border-b border-r-border' : ''}`}>
-                  <span className="text-[16px] leading-none text-r-3 hover:text-r-1 cursor-pointer transition-colors">···</span>
-                </td>
-              </tr>
+        {!stats ? (
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-[44px] bg-r-s2 rounded-[6px] animate-pulse" />
             ))}
-          </tbody>
-        </table>
+          </div>
+        ) : filteredActivity.length === 0 ? (
+          <p className="text-[13px] text-r-3 text-center py-8">No activity yet.</p>
+        ) : (
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                {['Type', 'Title', 'Status', 'Date'].map((h) => (
+                  <th key={h} className="text-[10px] font-semibold text-r-3 uppercase tracking-[0.08em] text-left pb-3 border-b border-r-border">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredActivity.map((row, i) => (
+                <tr key={i} className="hover:bg-r-s2 transition-colors duration-100">
+                  <td className={`py-[14px] text-[12px] font-medium text-r-3 capitalize ${i < filteredActivity.length - 1 ? 'border-b border-r-border' : ''}`}>
+                    {row.type}
+                  </td>
+                  <td className={`py-[14px] text-[13px] font-semibold text-r-1 ${i < filteredActivity.length - 1 ? 'border-b border-r-border' : ''}`}>
+                    {row.title}
+                  </td>
+                  <td className={`py-[14px] ${i < filteredActivity.length - 1 ? 'border-b border-r-border' : ''}`}>
+                    <StatusBadge status={row.status as InvoiceStatus} />
+                  </td>
+                  <td className={`py-[14px] text-[12px] text-r-3 ${i < filteredActivity.length - 1 ? 'border-b border-r-border' : ''}`}>
+                    {new Date(row.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

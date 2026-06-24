@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { BellIcon, SettingsIcon } from '../ui/Icons';
+import { useAuth } from '../../context/AuthContext';
 
 const TABS = ['Dashboard', 'Clients', 'Projects', 'Invoices', 'Reports'];
 
@@ -43,6 +44,10 @@ function RaqibLogo() {
 
 export default function Navbar() {
   const [active, setActive] = useState('Dashboard');
+  const { user } = useAuth();
+  const avatarText = user?.name
+    ? user.name.split(' ').slice(0, 2).map((p) => p[0]).join('').toUpperCase()
+    : 'YO';
 
   return (
     <nav
@@ -100,7 +105,7 @@ export default function Navbar() {
 
         {/* Avatar */}
         <div className="w-9 h-9 rounded-full bg-r-accent text-[12px] font-bold text-[#0C0E14] flex items-center justify-center cursor-pointer select-none">
-          YO
+          {avatarText}
         </div>
       </div>
     </nav>
