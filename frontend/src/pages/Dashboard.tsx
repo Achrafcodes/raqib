@@ -6,10 +6,10 @@ import PipelineChart from '../components/charts/PipelineChart';
 import { SearchIcon } from '../components/ui/Icons';
 
 const STATS = [
-  { label: 'Total Earned',    value: '$12,400', trendValue: '+24%',     trendText: 'this month', trendColor: 'var(--paid)',    trendUp: true  },
-  { label: 'Active Projects', value: '5',        trendValue: '+2 new',   trendText: 'this month', trendColor: 'var(--paid)',    trendUp: true  },
-  { label: 'Unpaid Invoices', value: '$2,800',   trendValue: '4 unpaid', trendText: 'invoices',   trendColor: 'var(--overdue)', trendUp: false },
-  { label: 'Follow-ups Due',  value: '3',        trendValue: 'today',    trendText: 'due today',  trendColor: 'var(--overdue)', trendUp: false },
+  { label: 'Total Earned',    value: '$12,400', trendValue: '24%',       trendText: 'this month',    trendColor: 'var(--paid)',    trendUp: true  },
+  { label: 'Active Projects', value: '5',        trendValue: '2 new',     trendText: 'this month',    trendColor: 'var(--paid)',    trendUp: true  },
+  { label: 'Unpaid Invoices', value: '$2,800',   trendValue: '4 unpaid',  trendText: 'invoices',      trendColor: 'var(--overdue)', trendUp: false },
+  { label: 'Follow-ups Due',  value: '3',        trendValue: 'due today', trendText: '',              trendColor: 'var(--overdue)', trendUp: false },
 ];
 
 type Status = 'paid' | 'pending' | 'overdue' | 'lead' | 'lost';
@@ -86,7 +86,7 @@ export default function Dashboard() {
           </thead>
           <tbody>
             {ACTIVITY.map((row, i) => (
-              <tr key={row.client} className="group hover:bg-r-s2 transition-colors duration-100">
+              <tr key={row.client} className="hover:bg-r-s2 transition-colors duration-100">
                 <td className={`py-[14px] ${i < ACTIVITY.length - 1 ? 'border-b border-r-border' : ''}`}>
                   <div className="flex items-center gap-[10px]">
                     <Avatar name={row.client} />
@@ -103,7 +103,7 @@ export default function Dashboard() {
                   <StatusBadge status={row.status} />
                 </td>
                 <td className={`py-[14px] ${i < ACTIVITY.length - 1 ? 'border-b border-r-border' : ''}`}>
-                  <span className="text-[16px] leading-none text-r-3 hover:text-r-1 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">···</span>
+                  <span className="text-[16px] leading-none text-r-3 hover:text-r-1 cursor-pointer transition-colors">···</span>
                 </td>
               </tr>
             ))}

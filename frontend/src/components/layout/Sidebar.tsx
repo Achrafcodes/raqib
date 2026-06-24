@@ -8,15 +8,15 @@ const QUICK_ACTIONS = [
 ];
 
 const FOLLOW_UPS = [
-  { name: 'Ahmed S.', time: 'Follow up today', bar: 'var(--overdue)', pct: 90 },
-  { name: 'Sara M.', time: 'Tomorrow', bar: 'var(--pending)', pct: 55 },
-  { name: 'John D.', time: 'In 3 days', bar: 'var(--paid)', pct: 25 },
+  { name: 'Sana Rashid', time: 'Today, 3pm', accent: 'var(--overdue)' },
+  { name: 'Marcus Teo', time: 'Tomorrow, 10am', accent: 'var(--pending)' },
+  { name: 'James Kim', time: 'Thu, 2pm', accent: 'var(--paid)' },
 ];
 
 const ACTIVE_PROJECTS = [
-  { letter: 'B', name: 'Brand Identity', client: 'Ahmed S.', pct: 80 },
-  { letter: 'W', name: 'Web Dev', client: 'Sara M.', pct: 45 },
-  { letter: 'S', name: 'SEO Campaign', client: 'John D.', pct: 20 },
+  { initials: 'WT', name: 'Web Redesign', client: 'Marcus Teo', pct: 72, color: '#1E3A5F' },
+  { initials: 'MA', name: 'Mobile App UI', client: 'James Kim', pct: 38, color: '#3D1F5F' },
+  { initials: 'JK', name: 'Brand Identity', client: 'Sana Rashid', pct: 91, color: '#1F3D2B' },
 ];
 
 const LABEL = 'text-[10px] font-medium text-r-3 uppercase tracking-[0.08em]';
@@ -71,20 +71,15 @@ export default function Sidebar() {
             <PlusIcon size={14} />
           </button>
         </div>
-        <div className="flex flex-col gap-[8px]">
+        <div className="flex flex-col gap-[6px]">
           {FOLLOW_UPS.map((f) => (
             <div
               key={f.name}
-              className="bg-r-surface border border-r-border rounded-[6px] p-3 flex flex-col gap-[6px]"
-              style={{ borderLeft: `2px solid ${f.bar}` }}
+              className="bg-r-surface border border-r-border rounded-[6px] px-3 py-[10px] flex justify-between items-center gap-2"
+              style={{ borderLeft: `2px solid ${f.accent}` }}
             >
-              <div className="flex justify-between items-center gap-2">
-                <span className="text-[12px] font-medium text-r-1 truncate">{f.name}</span>
-                <span className="text-[10px] text-r-3 shrink-0 whitespace-nowrap">{f.time}</span>
-              </div>
-              <div className="h-[2px] w-full bg-r-border rounded-full">
-                <div className="h-full rounded-full" style={{ width: `${f.pct}%`, background: f.bar }} />
-              </div>
+              <span className="text-[12px] font-medium text-r-1 truncate">{f.name}</span>
+              <span className="text-[10px] text-r-3 shrink-0 whitespace-nowrap">{f.time}</span>
             </div>
           ))}
         </div>
@@ -99,8 +94,11 @@ export default function Sidebar() {
         <div className="flex flex-col gap-[12px]">
           {ACTIVE_PROJECTS.map((p) => (
             <div key={p.name} className="flex items-center gap-[10px]">
-              <div className="w-[28px] h-[28px] bg-r-s2 border border-r-border rounded-[6px] flex items-center justify-center text-[11px] font-bold text-r-accent shrink-0">
-                {p.letter}
+              <div
+                className="w-[28px] h-[28px] rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                style={{ background: p.color }}
+              >
+                {p.initials}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] font-semibold text-r-1 truncate">{p.name}</p>
