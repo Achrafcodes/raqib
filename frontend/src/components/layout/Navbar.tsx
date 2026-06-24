@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BellIcon, SettingsIcon } from '../ui/Icons';
 
 const TABS = ['Dashboard', 'Clients', 'Projects', 'Invoices', 'Reports'];
 
@@ -23,7 +24,7 @@ export default function Navbar() {
             <span
               key={tab}
               onClick={() => setActive(tab)}
-              className={`text-[12px] font-medium px-4 py-[5px] rounded-[999px] cursor-pointer transition-colors duration-100 ${
+              className={`text-[12px] font-medium px-4 py-[5px] rounded-[999px] cursor-pointer transition-colors duration-150 ${
                 isActive
                   ? 'bg-r-accent text-[#0C0E14]'
                   : 'text-r-3 hover:text-r-2'
@@ -37,8 +38,12 @@ export default function Navbar() {
 
       {/* RIGHT — Icons */}
       <div className="flex items-center gap-3">
-        <span className="text-[15px] text-r-3 cursor-pointer">⚙</span>
-        <span className="text-[16px] text-r-3 cursor-pointer">🔔</span>
+        <button className="text-r-3 hover:text-r-2 transition-colors cursor-pointer">
+          <SettingsIcon size={16} />
+        </button>
+        <button className="text-r-3 hover:text-r-2 transition-colors cursor-pointer">
+          <BellIcon size={16} />
+        </button>
         <div className="w-8 h-8 rounded-full bg-r-accent text-[11px] font-semibold text-[#0C0E14] flex items-center justify-center">
           YO
         </div>
