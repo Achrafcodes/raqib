@@ -3,6 +3,7 @@ import { UserPlusIcon, FolderIcon, FileTextIcon, ClockIcon, PlusIcon } from '../
 import api from '../../utils/api';
 import type { Reminder, Project } from '../../types';
 import AddClientModal from '../clients/AddClientModal';
+import AddProjectModal from '../projects/AddProjectModal';
 import { useRefresh } from '../../context/RefreshContext';
 
 type Action = { icon: React.ReactNode; label: string; key: string };
@@ -49,6 +50,7 @@ export default function Sidebar() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [thisMonth, setThisMonth] = useState(0);
   const [showAddClient, setShowAddClient] = useState(false);
+  const [showAddProject, setShowAddProject] = useState(false);
   const { tick, refresh } = useRefresh();
 
   useEffect(() => {
@@ -96,7 +98,10 @@ export default function Sidebar() {
           {QUICK_ACTIONS.map((a) => (
             <button
               key={a.label}
-              onClick={() => { if (a.key === 'client') setShowAddClient(true); }}
+              onClick={() => {
+                if (a.key === 'client') setShowAddClient(true);
+                if (a.key === 'project') setShowAddProject(true);
+              }}
               className="bg-r-surface border border-r-border rounded-[10px] py-5 flex flex-col items-center gap-[10px] cursor-pointer hover:border-r-b2 hover:bg-r-s2 transition-all duration-150"
             >
               <span className="text-r-accent">{a.icon}</span>
@@ -171,6 +176,9 @@ export default function Sidebar() {
 
     {showAddClient && (
       <AddClientModal onClose={() => setShowAddClient(false)} onCreated={refresh} />
+    )}
+    {showAddProject && (
+      <AddProjectModal onClose={() => setShowAddProject(false)} />
     )}
     </>
   );
