@@ -8,7 +8,6 @@ import api from '../utils/api';
 import type { DashboardStats } from '../types';
 import { useRefresh } from '../context/RefreshContext';
 
-type InvoiceStatus = 'paid' | 'pending' | 'overdue' | 'lead' | 'lost';
 
 function fmt(n: number) {
   return n >= 1000 ? `$${(n / 1000).toFixed(1).replace('.0', '')}k` : `$${n}`;
@@ -127,7 +126,7 @@ export default function Dashboard() {
                     {row.title}
                   </td>
                   <td className={`py-[14px] ${i < filteredActivity.length - 1 ? 'border-b border-r-border' : ''}`}>
-                    <StatusBadge status={row.status as InvoiceStatus} />
+                    <StatusBadge status={row.status} />
                   </td>
                   <td className={`py-[14px] text-[12px] text-r-3 ${i < filteredActivity.length - 1 ? 'border-b border-r-border' : ''}`}>
                     {new Date(row.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
