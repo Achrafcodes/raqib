@@ -13,8 +13,8 @@ No bloat. No team features. Built for the solo freelancer.
 ---
 
 ## Tech Stack
-- **Frontend:** React (Vite) + Tailwind CSS
-- **Backend:** Node.js + Express
+- **Frontend:** React (Vite) + TypeScript + Tailwind CSS
+- **Backend:** Node.js + Express + TypeScript
 - **Database:** MongoDB Atlas (Mongoose)
 - **Auth:** JWT (access token in localStorage)
 - **PDF Generation:** pdf-lib
@@ -51,61 +51,66 @@ raqib/
 ├── backend/
 │   ├── src/
 │   │   ├── models/
-│   │   │   ├── User.js
-│   │   │   ├── Client.js
-│   │   │   ├── Project.js
-│   │   │   ├── Invoice.js
-│   │   │   └── Reminder.js
+│   │   │   ├── User.ts
+│   │   │   ├── Client.ts
+│   │   │   ├── Project.ts
+│   │   │   ├── Invoice.ts
+│   │   │   └── Reminder.ts
 │   │   ├── routes/
-│   │   │   ├── auth.routes.js
-│   │   │   ├── client.routes.js
-│   │   │   ├── project.routes.js
-│   │   │   ├── invoice.routes.js
-│   │   │   ├── reminder.routes.js
-│   │   │   └── dashboard.routes.js
+│   │   │   ├── auth.routes.ts
+│   │   │   ├── client.routes.ts
+│   │   │   ├── project.routes.ts
+│   │   │   ├── invoice.routes.ts
+│   │   │   ├── reminder.routes.ts
+│   │   │   └── dashboard.routes.ts
 │   │   ├── controllers/
-│   │   │   ├── auth.controller.js
-│   │   │   ├── client.controller.js
-│   │   │   ├── project.controller.js
-│   │   │   ├── invoice.controller.js
-│   │   │   ├── reminder.controller.js
-│   │   │   └── dashboard.controller.js
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── client.controller.ts
+│   │   │   ├── project.controller.ts
+│   │   │   ├── invoice.controller.ts
+│   │   │   ├── reminder.controller.ts
+│   │   │   └── dashboard.controller.ts
 │   │   ├── middleware/
-│   │   │   ├── auth.middleware.js
-│   │   │   └── error.middleware.js
+│   │   │   ├── auth.middleware.ts
+│   │   │   └── error.middleware.ts
+│   │   ├── types/
+│   │   │   └── index.ts
 │   │   └── utils/
-│   │       ├── generatePDF.js
-│   │       └── sendEmail.js
+│   │       ├── generatePDF.ts
+│   │       └── sendEmail.ts
 │   ├── .env
-│   └── server.js
+│   ├── tsconfig.json
+│   └── server.ts
 │
 └── frontend/
     └── src/
         ├── components/
         │   ├── ui/
-        │   │   ├── StatCard.jsx
-        │   │   ├── StatusBadge.jsx
-        │   │   ├── TableRow.jsx
-        │   │   └── Button.jsx
+        │   │   ├── StatCard.tsx
+        │   │   ├── StatusBadge.tsx
+        │   │   ├── TableRow.tsx
+        │   │   └── Button.tsx
         │   ├── layout/
-        │   │   ├── Navbar.jsx
-        │   │   └── Layout.jsx
+        │   │   ├── Navbar.tsx
+        │   │   └── Layout.tsx
         │   └── charts/
-        │       ├── EarningsChart.jsx
-        │       └── PipelineChart.jsx
+        │       ├── EarningsChart.tsx
+        │       └── PipelineChart.tsx
         ├── pages/
-        │   ├── Dashboard.jsx
-        │   ├── Clients.jsx
-        │   ├── Projects.jsx
-        │   ├── Invoices.jsx
-        │   ├── Reminders.jsx
-        │   └── Settings.jsx
+        │   ├── Dashboard.tsx
+        │   ├── Clients.tsx
+        │   ├── Projects.tsx
+        │   ├── Invoices.tsx
+        │   ├── Reminders.tsx
+        │   └── Settings.tsx
+        ├── types/
+        │   └── index.ts
         ├── context/
-        │   └── AuthContext.jsx
+        │   └── AuthContext.tsx
         ├── hooks/
-        │   └── useAuth.js
+        │   └── useAuth.ts
         └── utils/
-            └── api.js
+            └── api.ts
 ```
 
 ---
@@ -261,8 +266,8 @@ PATCH  /api/reminders/:id/done → mark as done
 ---
 
 ## Coding Rules — STRICT
+- TypeScript everywhere — no `any` type allowed
 - ES Modules (import/export) everywhere
-- "type": "module" in backend package.json
 - async/await ONLY — never .then().catch()
 - Every controller wrapped in try/catch
 - ALWAYS filter by userId — never return another user's data
@@ -271,6 +276,7 @@ PATCH  /api/reminders/:id/done → mark as done
 - Never return raw MongoDB errors
 - Never use var — only const / let
 - Never hardcode secrets — always process.env
+- Define types/interfaces in src/types/index.ts
 
 ---
 

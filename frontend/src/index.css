@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+:root {
+  --bg:           #0B0F1A;
+  --surface:      #111827;
+  --border:       #1E2A3A;
+  --accent:       #4ADE80;
+  --accent-hover: #22C55E;
+  --text:         #F1F5F9;
+  --muted:        #64748B;
+}
+
+.light {
+  --bg:           #F8FAFC;
+  --surface:      #FFFFFF;
+  --border:       #E2E8F0;
+  --accent:       #16A34A;
+  --accent-hover: #15803D;
+  --text:         #0F172A;
+  --muted:        #64748B;
+}
+
+@theme inline {
+  --color-raqib-bg:           var(--bg);
+  --color-raqib-surface:      var(--surface);
+  --color-raqib-border:       var(--border);
+  --color-raqib-accent:       var(--accent);
+  --color-raqib-accent-hover: var(--accent-hover);
+  --color-raqib-text:         var(--text);
+  --color-raqib-muted:        var(--muted);
+  --color-status-paid:        #4ADE80;
+  --color-status-pending:     #FBBF24;
+  --color-status-overdue:     #F87171;
+  --color-status-lead:        #60A5FA;
+  --color-status-lost:        #6B7280;
+  --color-status-active:      #4ADE80;
+  --color-status-draft:       #6B7280;
+  --font-family-sans: 'Inter', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+}
+
+/* Tabular numbers everywhere they matter */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Select element dark */
+select option { background-color: var(--surface); color: var(--text); }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.3s ease forwards; }
