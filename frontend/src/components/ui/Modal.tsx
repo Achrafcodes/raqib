@@ -1,0 +1,41 @@
+import { useEffect, ReactNode } from 'react';
+
+interface Props {
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+}
+
+export default function Modal({ title, onClose, children }: Props) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.6)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="w-full max-w-[480px] rounded-[12px] border border-r-border flex flex-col"
+        style={{ background: 'var(--surface)' }}
+      >
+        {/* Header */}
+        <div className="flex justify-between items-center px-6 py-5 border-b border-r-border">
+          <span className="text-[15px] font-semibold text-r-1">{title}</span>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-[6px] flex items-center justify-center text-r-3 hover:text-r-1 hover:bg-r-s2 transition-all cursor-pointer text-[18px] leading-none"
+          >
+            ×
+          </button>
+        </div>
+        {/* Body */}
+        <div className="px-6 py-5">{children}</div>
+      </div>
+    </div>
+  );
+}

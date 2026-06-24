@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { UserPlusIcon, FolderIcon, FileTextIcon, ClockIcon, PlusIcon } from '../ui/Icons';
 import api from '../../utils/api';
 import type { Reminder, Project } from '../../types';
+import AddClientModal from '../clients/AddClientModal';
 
-const QUICK_ACTIONS = [
-  { icon: <UserPlusIcon size={24} />, label: 'New Client' },
-  { icon: <FolderIcon size={24} />, label: 'New Project' },
-  { icon: <FileTextIcon size={24} />, label: 'Invoice' },
-  { icon: <ClockIcon size={24} />, label: 'Reminder' },
+type Action = { icon: React.ReactNode; label: string; key: string };
+const QUICK_ACTIONS: Action[] = [
+  { icon: <UserPlusIcon size={24} />, label: 'New Client', key: 'client' },
+  { icon: <FolderIcon size={24} />, label: 'New Project', key: 'project' },
+  { icon: <FileTextIcon size={24} />, label: 'Invoice', key: 'invoice' },
+  { icon: <ClockIcon size={24} />, label: 'Reminder', key: 'reminder' },
 ];
 
 const AVATAR_COLORS = ['#1E3A5F', '#3D1F5F', '#3D2B1F', '#1F3D2B', '#3D3D1F'];
@@ -45,6 +47,14 @@ export default function Sidebar() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [thisMonth, setThisMonth] = useState(0);
+  const [showAddClient, setShowAddClient] = useState(false);
+
+  const refresh = () => {
+    api.get('/api/projects').then((res) => {
+      const all: Project[] = res.data.data;
+      setProjects(all.filter((p) => p.status === 'in-progress').slice(0, 3));
+    });
+  };
 
   useEffect(() => {
     api.get('/api/reminders').then((res) => {
@@ -88,13 +98,14 @@ export default function Sidebar() {
         <p className={`${LABEL} mb-3`}>Quick Actions</p>
         <div className="grid grid-cols-2 gap-[10px]">
           {QUICK_ACTIONS.map((a) => (
-            <div
+            <button
               key={a.label}
+              onClick={() => { if (a.key === 'client') setShowAddClient(true); }}
               className="bg-r-surface border border-r-border rounded-[10px] py-5 flex flex-col items-center gap-[10px] cursor-pointer hover:border-r-b2 hover:bg-r-s2 transition-all duration-150"
             >
               <span className="text-r-accent">{a.icon}</span>
               <span className="text-[12px] font-medium text-r-2 text-center">{a.label}</span>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -161,5 +172,9 @@ export default function Sidebar() {
         )}
       </div>
     </aside>
+
+    {showAddClient && (
+      <AddClientModal onClose={() => setShowAddClient(false)} onCreated={refresh} />
+    )}
   );
 }
