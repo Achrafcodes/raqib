@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 
-const FROM = 'Raqib <noreply@raqib.app>';
+// Use onboarding@resend.dev until raqib.app domain is verified in Resend dashboard
+const FROM = process.env.EMAIL_FROM ?? 'Raqib <onboarding@resend.dev>';
 
 const getResend = (): Resend => {
   if (!process.env.RESEND_API_KEY) throw new Error('RESEND_API_KEY is not set');
