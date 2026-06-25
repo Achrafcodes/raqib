@@ -23,8 +23,9 @@ export const getInvoices = async (req: AuthRequest, res: Response): Promise<void
 
 export const createInvoice = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const { clientId, projectId, items, subtotal, tax, total, status, dueDate } = req.body;
     const invoiceNumber = await getNextInvoiceNumber(req.user?.id as string);
-    const invoice = await Invoice.create({ ...req.body, userId: req.user?.id, invoiceNumber });
+    const invoice = await Invoice.create({ clientId, projectId, items, subtotal, tax, total, status, dueDate, userId: req.user?.id, invoiceNumber });
     res.status(201).json({ success: true, data: invoice });
   } catch {
     res.status(500).json({ success: false, message: 'Failed to create invoice' });
@@ -48,9 +49,10 @@ export const getInvoice = async (req: AuthRequest, res: Response): Promise<void>
 
 export const updateInvoice = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const { clientId, projectId, items, subtotal, tax, total, status, dueDate, paidAt } = req.body;
     const invoice = await Invoice.findOneAndUpdate(
       { _id: req.params.id, userId: req.user?.id },
-      req.body,
+      { clientId, projectId, items, subtotal, tax, total, status, dueDate, paidAt },
       { new: true, runValidators: true }
     );
     if (!invoice) {

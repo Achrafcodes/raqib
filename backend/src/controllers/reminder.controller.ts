@@ -15,7 +15,8 @@ export const getReminders = async (req: AuthRequest, res: Response): Promise<voi
 
 export const createReminder = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const reminder = await Reminder.create({ ...req.body, userId: req.user?.id });
+    const { clientId, title, note, dueDate, isDone } = req.body;
+    const reminder = await Reminder.create({ clientId, title, note, dueDate, isDone, userId: req.user?.id });
     res.status(201).json({ success: true, data: reminder });
   } catch {
     res.status(500).json({ success: false, message: 'Failed to create reminder' });
@@ -24,9 +25,10 @@ export const createReminder = async (req: AuthRequest, res: Response): Promise<v
 
 export const updateReminder = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const { clientId, title, note, dueDate, isDone } = req.body;
     const reminder = await Reminder.findOneAndUpdate(
       { _id: req.params.id, userId: req.user?.id },
-      req.body,
+      { clientId, title, note, dueDate, isDone },
       { new: true, runValidators: true }
     );
     if (!reminder) {

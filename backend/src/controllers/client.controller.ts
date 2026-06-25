@@ -13,7 +13,8 @@ export const getClients = async (req: AuthRequest, res: Response): Promise<void>
 
 export const createClient = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const client = await Client.create({ ...req.body, userId: req.user?.id });
+    const { name, email, phone, company, source, status, notes } = req.body;
+    const client = await Client.create({ name, email, phone, company, source, status, notes, userId: req.user?.id });
     res.status(201).json({ success: true, data: client });
   } catch {
     res.status(500).json({ success: false, message: 'Failed to create client' });
@@ -35,9 +36,10 @@ export const getClient = async (req: AuthRequest, res: Response): Promise<void> 
 
 export const updateClient = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const { name, email, phone, company, source, status, notes } = req.body;
     const client = await Client.findOneAndUpdate(
       { _id: req.params.id, userId: req.user?.id },
-      req.body,
+      { name, email, phone, company, source, status, notes },
       { new: true, runValidators: true }
     );
     if (!client) {

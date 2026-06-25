@@ -15,7 +15,8 @@ export const getProjects = async (req: AuthRequest, res: Response): Promise<void
 
 export const createProject = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const project = await Project.create({ ...req.body, userId: req.user?.id });
+    const { clientId, title, description, price, currency, status, deadline } = req.body;
+    const project = await Project.create({ clientId, title, description, price, currency, status, deadline, userId: req.user?.id });
     res.status(201).json({ success: true, data: project });
   } catch {
     res.status(500).json({ success: false, message: 'Failed to create project' });
@@ -40,9 +41,10 @@ export const getProject = async (req: AuthRequest, res: Response): Promise<void>
 
 export const updateProject = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const { clientId, title, description, price, currency, status, deadline } = req.body;
     const project = await Project.findOneAndUpdate(
       { _id: req.params.id, userId: req.user?.id },
-      req.body,
+      { clientId, title, description, price, currency, status, deadline },
       { new: true, runValidators: true }
     );
     if (!project) {
