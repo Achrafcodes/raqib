@@ -16,9 +16,9 @@ No bloat. No team features. Built for the solo freelancer.
 - **Frontend:** React (Vite) + TypeScript + Tailwind CSS v4
 - **Backend:** Node.js + Express + TypeScript
 - **Database:** MongoDB Atlas (Mongoose)
-- **Auth:** JWT stored in httpOnly cookie (set by backend, sent automatically via `withCredentials`)
-- **PDF Generation:** pdf-lib (not yet implemented)
-- **Email:** Resend API (not yet implemented)
+- **Auth:** JWT in httpOnly cookie + Google OAuth + GitHub OAuth (passport.js)
+- **Email:** Nodemailer + Gmail SMTP (no domain required)
+- **PDF Generation:** pdf-lib
 - **Charts:** Recharts
 - **Font:** Space Grotesk (Google Fonts)
 - **Deployment:** Vercel (frontend) + Railway (backend)
@@ -60,11 +60,15 @@ raqib/
 ├── backend/
 │   ├── src/
 │   │   ├── models/          User, Client, Project, Invoice, Reminder
-│   │   ├── routes/          auth, client, project, invoice, reminder, dashboard
+│   │   ├── routes/          auth, client, project, invoice, reminder, dashboard, user
 │   │   ├── controllers/     one file per resource
-│   │   ├── middleware/       auth.middleware.ts, error.middleware.ts
+│   │   ├── middleware/      auth.middleware.ts (authMiddleware + validateObjectId)
 │   │   ├── types/           index.ts (AuthRequest interface)
-│   │   └── utils/           generatePDF.ts, sendEmail.ts
+│   │   └── utils/
+│   │       ├── generatePDF.ts       ← pdf-lib dark A4 invoice
+│   │       ├── sendEmail.ts         ← nodemailer Gmail SMTP (reminders, overdue, invoice PDF)
+│   │       ├── notificationCron.ts  ← daily 9am cron (node-cron)
+│   │       └── passport.ts          ← Google + GitHub OAuth strategies
 │   ├── .env
 │   ├── tsconfig.json
 │   └── server.ts
@@ -74,38 +78,49 @@ raqib/
         ├── components/
         │   ├── ui/
         │   │   ├── StatCard.tsx
-        │   │   ├── StatusBadge.tsx     ← handles ALL statuses (client + project + invoice)
+        │   │   ├── StatusBadge.tsx     ← handles ALL statuses
         │   │   ├── Avatar.tsx          ← deterministic color from name, initials
         │   │   ├── Modal.tsx           ← reusable modal shell (Escape + outside click)
         │   │   ├── DateTimePicker.tsx  ← custom dark calendar picker with time
         │   │   ├── LoadingScreen.tsx   ← animated spark logo on auth check
-        │   │   └── Icons.tsx           ← inline SVG icon library
+        │   │   ├── PageLoader.tsx      ← in-page spark loader
+        │   │   ├── Icons.tsx           ← inline SVG icon library
+        │   │   ├── Select.tsx          ← portal-based themed dropdown
+        │   │   ├── ConfirmModal.tsx    ← themed delete dialog
+        │   │   └── OAuthButtons.tsx    ← Google + GitHub sign-in buttons
         │   ├── layout/
-        │   │   ├── Navbar.tsx          ← 60px, spark logo, pill tabs, avatar logout
+        │   │   ├── Navbar.tsx          ← 60px, spark logo, Link-based pill tabs, bell, avatar
         │   │   ├── Layout.tsx          ← shell: navbar + main + sidebar
         │   │   └── Sidebar.tsx         ← This Month, Quick Actions, Follow-ups, Active Projects
         │   ├── charts/
-        │   │   ├── EarningsChart.tsx   ← accepts { data, totalEarned } props
-        │   │   └── PipelineChart.tsx   ← accepts { segments } props, empty state
+        │   │   ├── EarningsChart.tsx
+        │   │   └── PipelineChart.tsx
         │   ├── clients/
         │   │   └── AddClientModal.tsx
         │   ├── projects/
         │   │   └── AddProjectModal.tsx
         │   ├── invoices/
-        │   │   └── AddInvoiceModal.tsx ← line items, tax, live totals
+        │   │   └── AddInvoiceModal.tsx
         │   └── reminders/
-        │       └── AddReminderModal.tsx ← uses DateTimePicker
+        │       └── AddReminderModal.tsx
         ├── pages/
-        │   ├── Dashboard.tsx           ← real API data, search filter on activity
-        │   ├── Login.tsx
-        │   └── Register.tsx
+        │   ├── Dashboard.tsx
+        │   ├── Clients.tsx
+        │   ├── Projects.tsx
+        │   ├── Invoices.tsx      ← send invoice by email (paper plane icon)
+        │   ├── Reminders.tsx
+        │   ├── Settings.tsx
+        │   ├── Login.tsx         ← email/password + OAuth buttons
+        │   ├── Register.tsx      ← email/password + OAuth buttons
+        │   ├── VerifyEmail.tsx   ← /verify-email?token= (kept for legacy links)
+        │   └── CheckEmail.tsx    ← /check-email (kept for legacy links)
         ├── context/
-        │   ├── AuthContext.tsx          ← cookie-based, /me on mount
-        │   └── RefreshContext.tsx       ← global tick — increment to trigger refetch everywhere
+        │   ├── AuthContext.tsx   ← cookie-based, /me on mount, register auto-logs in
+        │   └── RefreshContext.tsx
         ├── types/
-        │   └── index.ts                ← User, Client, Project, Invoice, Reminder, DashboardStats
+        │   └── index.ts
         └── utils/
-            └── api.ts                  ← axios with withCredentials: true
+            └── api.ts
 ```
 
 ---
@@ -117,74 +132,18 @@ raqib/
 {
   name: String,
   email: String (unique),
-  password: String (bcrypt),
+  password: String (bcrypt, cost 12),
   freelanceTitle: String,
-  currency: String (default: "USD"),
+  currency: String (default: "USD"),  // whitelist-validated on update
   isEmailVerified: Boolean (default: false),
+  emailVerificationToken: String,     // legacy, not used in current flow
+  emailVerificationExpires: Date,
   createdAt: Date
 }
 ```
 
-### Client
-```js
-{
-  userId: ObjectId (ref: User),  // ALWAYS filter by this
-  name: String,
-  email: String,
-  phone: String,
-  company: String,
-  source: enum [upwork, fiverr, instagram, referral, cold-email, other],
-  status: enum [lead, negotiating, active, done, lost],
-  notes: String,
-  createdAt: Date
-}
-```
-
-### Project
-```js
-{
-  userId: ObjectId (ref: User),
-  clientId: ObjectId (ref: Client),
-  title: String,
-  description: String,
-  price: Number,
-  currency: String (default: "USD"),
-  status: enum [not-started, in-progress, review, done, cancelled],
-  deadline: Date,
-  createdAt: Date
-}
-```
-
-### Invoice
-```js
-{
-  userId: ObjectId (ref: User),
-  clientId: ObjectId (ref: Client),
-  projectId: ObjectId (ref: Project),
-  invoiceNumber: String,          // "INV-001", auto-generated
-  items: [{ description, quantity, unitPrice, total }],
-  subtotal: Number,
-  tax: Number (default: 0),       // percentage
-  total: Number,
-  status: enum [draft, sent, paid, overdue],
-  dueDate: Date,
-  paidAt: Date,
-  createdAt: Date
-}
-```
-
-### Reminder
-```js
-{
-  userId: ObjectId (ref: User),
-  clientId: ObjectId (ref: Client),
-  title: String,
-  note: String,
-  dueDate: Date,
-  isDone: Boolean (default: false),
-  createdAt: Date
-}
-```
+### Client / Project / Invoice / Reminder
+Same as before — see schemas above in original file.
 
 ---
 
@@ -192,43 +151,60 @@ raqib/
 
 ### Auth
 ```
-POST /api/auth/register   → sets httpOnly cookie
-POST /api/auth/login      → sets httpOnly cookie
-POST /api/auth/logout     → clears cookie
-GET  /api/auth/me         → JWT required (reads from cookie)
+POST /api/auth/register          → sets httpOnly cookie, auto-logs in
+POST /api/auth/login             → sets httpOnly cookie
+POST /api/auth/logout            → clears cookie
+GET  /api/auth/me                → JWT required
+GET  /api/auth/google            → redirect to Google OAuth
+GET  /api/auth/google/callback   → sets cookie, redirect to CLIENT_URL
+GET  /api/auth/github            → redirect to GitHub OAuth
+GET  /api/auth/github/callback   → sets cookie, redirect to CLIENT_URL
 ```
 
 ### Dashboard (JWT required)
 ```
 GET /api/dashboard/stats
-→ returns: totalEarned, activeProjects, unpaidInvoices,
-           followUpsDueToday, earningsChart (last 12 months),
-           pipelineBreakdown, recentActivity
+→ totalEarned, activeProjects, unpaidInvoices, followUpsDueToday,
+  earningsChart, earningsYearlyChart, pipelineBreakdown, recentActivity
 ```
 
-### Clients / Projects / Invoices / Reminders (JWT required)
+### Clients / Projects / Reminders (JWT required)
 ```
 GET    /api/:resource
 POST   /api/:resource
-GET    /api/:resource/:id
-PUT    /api/:resource/:id
-DELETE /api/:resource/:id
-PATCH  /api/reminders/:id/done   → mark reminder done
-GET    /api/invoices/:id/pdf     → PDF buffer (pdf-lib, dark branded A4)
-PUT    /api/user/profile         → update name, freelanceTitle, currency
-PUT    /api/user/password        → verify current password, hash new one
+GET    /api/:resource/:id        ← validateObjectId middleware
+PUT    /api/:resource/:id        ← validateObjectId middleware
+DELETE /api/:resource/:id        ← validateObjectId middleware
+PATCH  /api/reminders/:id/done
+```
+
+### Invoices (JWT required)
+```
+GET    /api/invoices
+POST   /api/invoices
+GET    /api/invoices/:id
+PUT    /api/invoices/:id
+DELETE /api/invoices/:id
+GET    /api/invoices/:id/pdf     → PDF buffer download
+POST   /api/invoices/:id/send   → generate PDF + email to client via Gmail
+```
+
+### User (JWT required)
+```
+PUT /api/user/profile    → name, freelanceTitle, currency (whitelist validated)
+PUT /api/user/password   → verify current, hash new
 ```
 
 ---
 
 ## Auth Rules
-- Cookie: httpOnly, SameSite: lax, 7 day maxAge
-- `secure: true` only in production (`NODE_ENV === 'production'`)
+- Cookie: httpOnly, SameSite: lax, 7 day maxAge, secure in production
 - `withCredentials: true` on all axios requests
-- CORS: allows `localhost:5173` and `localhost:5174` with `credentials: true`
-- `authMiddleware` reads from `req.cookies.token` first, falls back to `Authorization: Bearer` header
-- No 401 interceptor on frontend — `ProtectedRoute` handles redirect to `/login`
-- `GuestRoute` redirects already-logged-in users away from `/login` and `/register`
+- CORS: whitelist of allowed origins with `credentials: true`
+- `authMiddleware` reads from `req.cookies.token` → falls back to `Authorization: Bearer`
+- `validateObjectId` middleware on all `/:id` routes — returns 400 for malformed IDs
+- OAuth users created with `isEmailVerified: true` (Google/GitHub already trusted)
+- No email verification gate — register goes straight to dashboard
 
 ---
 
@@ -239,15 +215,45 @@ PUT    /api/user/password        → verify current password, hash new one
 MONGO_URI=
 JWT_SECRET=
 JWT_EXPIRES_IN=7d
-RESEND_API_KEY=
 CLIENT_URL=http://localhost:5174
 PORT=5000
+
+# Email (Gmail SMTP)
+GMAIL_USER=your.gmail@gmail.com
+GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx   # Google App Password (not account password)
+
+# OAuth
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
 
 # Frontend (.env)
 VITE_API_URL=http://localhost:5000
 ```
 
-Vite dev server runs on port **5174** (set in `vite.config.ts` with `strictPort: true`).
+**Gmail App Password setup:** Google Account → Security → 2-Step Verification → App passwords → create "Raqib"
+**OAuth callback URLs:**
+- Google: `{SERVER_URL}/api/auth/google/callback`
+- GitHub: `{SERVER_URL}/api/auth/github/callback`
+
+Vite dev server runs on port **5174** (`vite.config.ts` with `strictPort: true`).
+
+---
+
+## Security — All Fixed
+
+| Finding | Fix |
+|---|---|
+| H1 Mass assignment on create | Destructure allowed fields only before `Model.create()` |
+| H2 Mass assignment on update | Destructure allowed fields only before `findOneAndUpdate()` |
+| M1 No rate limiting | `express-rate-limit` — 10 req/15min on `/auth/login` + `/auth/register` |
+| M2 No helmet | `helmet()` on all responses |
+| M3 Invalid ObjectId → 500 | `validateObjectId` middleware → 400 |
+| M4 No numeric bounds | Invoice: subtotal/tax/total ≥ 0, tax ≤ 100. Project: price ≥ 0 |
+| L1 JWT_SECRET undefined | Startup guard — `process.exit(1)` if missing |
+| L2 No body size limit | `express.json({ limit: '50kb' })` |
+| L3 Currency accepts anything | Whitelist of 20 ISO currency codes in `updateProfile` |
 
 ---
 
@@ -272,8 +278,9 @@ Vite dev server runs on port **5174** (set in `vite.config.ts` with `strictPort:
 - All pages use `<Layout>` wrapper
 - API calls go through `utils/api.ts` (axios instance with `withCredentials`)
 - Auth state managed by `AuthContext` (cookie-based)
-- Global refresh via `RefreshContext` — call `refresh()` after any mutation; Dashboard + Sidebar both listen to `tick`
+- Global refresh via `RefreshContext` — call `refresh()` after any mutation
 - Modals: use `<Modal>` shell, close on Escape + outside click
+- Nav tabs use `<Link to="...">` not `onClick+navigate` — enables Ctrl+Click new tab
 - No `Co-Authored-By: Claude` in git commits
 - After every substantial change, commit and push to `main` without waiting to be asked
 
@@ -281,11 +288,21 @@ Vite dev server runs on port **5174** (set in `vite.config.ts` with `strictPort:
 
 ## Component Patterns
 
-### Adding a new "create" modal
-1. Create `src/components/<resource>/Add<Resource>Modal.tsx`
-2. Use `<Modal>` shell, `useRefresh()` for post-save refresh
-3. Add state + button in `Sidebar.tsx` Quick Actions
-4. `refresh()` call triggers Dashboard + Sidebar refetch automatically
+### OAuthButtons
+`components/ui/OAuthButtons.tsx` — Google + GitHub `<a href>` links pointing to backend OAuth routes. Used in Login and Register pages.
+
+### validateObjectId middleware
+`src/middleware/auth.middleware.ts` — exported alongside `authMiddleware`. Apply to all `/:id` routes.
+
+### Email (sendEmail.ts)
+Three exported functions — all use Gmail SMTP via nodemailer:
+- `sendReminderEmail(to, name, reminders[])` — upcoming follow-ups digest
+- `sendOverdueInvoiceEmail(to, name, invoices[])` — overdue invoice alert
+- `sendInvoiceEmail(to, name, invoice, pdfBuffer)` — sends invoice PDF as attachment
+
+### notificationCron
+`src/utils/notificationCron.ts` — `startNotificationCron()` called after MongoDB connects.
+Runs daily at 9am: sends reminder digest + flips sent→overdue invoices + emails overdue alert.
 
 ### RefreshContext
 ```ts
@@ -293,64 +310,30 @@ const { refresh } = useRefresh();  // call after any POST/PUT/DELETE
 const { tick } = useRefresh();     // add to useEffect deps to auto-refetch
 ```
 
-### StatusBadge
-Handles every possible status string — client, project, invoice statuses all covered.
-Fallback: shows raw status string with muted styling if unknown.
-
-### DateTimePicker
-Reusable dark calendar picker at `components/ui/DateTimePicker.tsx`.
-Props: `value: string` (ISO "YYYY-MM-DDTHH:mm"), `onChange: (v: string) => void`.
-
-### Select (custom dropdown)
-Reusable themed dropdown at `components/ui/Select.tsx`. Replaces all native `<select>` — uses `createPortal` to escape `overflow-hidden` containers.
-Props: `value`, `onChange`, `options: { value, label }[]`, `disabled?`, `className?`.
-
-### ConfirmModal
-Themed delete confirmation at `components/ui/ConfirmModal.tsx`. Red trash icon, backdrop blur, Escape to cancel.
-Props: `title`, `message`, `confirmLabel?`, `onConfirm`, `onCancel`, `loading?`.
-
-### StatusDropdown (inline, per-page)
-Colored inline dropdown used in Clients, Projects, Invoices tables. Built per-page (not a shared component) because each resource has different status options and colors. Always uses `createPortal` to avoid clipping.
-
-### Form validation pattern
-All forms use a `validate(form) → Errs` function + `touched` state map. Errors show inline below each field (icon + red text) only after blur or submit attempt. Invalid fields get `border-[var(--overdue)]`. Server errors render as a red banner. `noValidate` on all forms to suppress browser popups.
-
-### PageLoader
-Reusable in-page loader at `components/ui/PageLoader.tsx`. Used at the top of every page while data fetches (`if (loading) return <PageLoader />`). Smaller version of LoadingScreen — spark draw animation + pulsing dots, centered with `min-h-[60vh]`.
-
-### Notification bell
-Built into `Navbar.tsx`. Fetches reminders + projects + invoices on mount and on every `tick`. Shows items due within 3 days. Color-coded: red = overdue/today, yellow = tomorrow, green = 2–3 days. Count badge on bell. Each item navigates to its page on click.
+### StatusBadge / StatusDropdown / Select / ConfirmModal / DateTimePicker / PageLoader
+All unchanged — see previous documentation.
 
 ### Responsive layout
-- **Mobile (< md)**: bottom nav bar with 5 icon+label tabs, sidebar hidden, tables replaced with cards, filters stack vertically, modals slide up as bottom sheet
-- **Tablet (md–lg)**: desktop pill nav, sidebar still hidden
+- **Mobile (< md)**: bottom nav (Link-based), sidebar hidden, tables → cards, modals as bottom sheet
+- **Tablet (md–lg)**: desktop pill nav, sidebar hidden
 - **Desktop (lg+)**: full layout — pill nav, 320px sidebar, tables
-- Modal: `items-end sm:items-center`, `rounded-t-[16px] sm:rounded-[12px]`, scrollable body with `max-h-[92dvh]`
 
 ---
 
 ## Key Decisions
 - MongoDB over Supabase → MERN consistency, no inactivity pause
-- Vite over CRA → faster dev
-- Space Grotesk over Inter → better CRM/dashboard personality
-- httpOnly cookies over localStorage → XSS-proof token storage
-- pdf-lib → free PDF generation, no external service
-- Recharts → free, easy dark theme customization
-- No Redux → `RefreshContext` + local state enough for this scope
-- No icon library → inline SVG icons (zero dependency, consistent style)
-- Spark chart polyline as logo → mirrors the earnings chart, represents business growth
+- httpOnly cookies over localStorage → XSS-proof
+- Gmail SMTP over Resend → no domain verification needed, free, works in production
+- passport.js for OAuth → clean strategy pattern, session: false (JWT-only)
+- pdf-lib → free PDF generation
+- Recharts → free, easy dark theme
+- No Redux → RefreshContext + local state
+- No icon library → inline SVG (zero deps)
+- `<Link>` not `<button onClick={navigate}>` → Ctrl+Click works on all nav items
 
 ---
 
 ## Progress Summary
-
-### Design & UI
-- Dark minimal dashboard built pixel-close to Figma reference
-- Layout: 60px navbar (spark logo + pill tabs + icon buttons + avatar) | main content (max-w 1180px) | 320px sidebar
-- Figma reference converted manually to React + Tailwind — no Figma plugin used
-- All emojis replaced with inline SVG icons (Heroicons style, 1.8px stroke)
-- Font: Space Grotesk (replaced Inter)
-- Spacing root cause fixed: Tailwind v4 global reset must be in `@layer base {}` or it nukes all utility padding/margin
 
 ### What's Done
 
@@ -358,49 +341,37 @@ Built into `Navbar.tsx`. Fetches reminders + projects + invoices on mount and on
 |---|---|---|
 | Backend API | ✅ Complete | All 5 resources + dashboard stats |
 | Auth (httpOnly cookie) | ✅ Complete | Login, register, logout, /me |
-| Loading screen | ✅ Complete | Animated spark logo, fades in |
-| Login / Register pages | ✅ Complete | Dark form, regex validation, inline errors, redirects if logged in |
-| Dashboard page | ✅ Complete | Real API data, search, stat cards, charts, activity table; Active Projects card navigates to /projects |
-| Dashboard stats bug fix | ✅ Complete | `aggregate` $match needs `new ObjectId(userId)` — string won't match |
-| Earnings chart | ✅ Complete | Monthly (cumulative daily, stops at today) + Yearly (cumulative monthly, stops at current month), dynamic Y-axis |
-| Pipeline chart | ✅ Complete | Real data, empty state when no projects; colors map project statuses: not-started=grey, in-progress=blue, review=yellow, done=green, cancelled=red |
-| Sidebar | ✅ Complete | This Month (real), Follow-ups (real), Active Projects (real) |
-| Quick Actions | ✅ Complete | All 4 buttons open working modals |
-| Navbar tab routing | ✅ Complete | useNavigate + useLocation, active tab from URL |
-| Custom Select dropdown | ✅ Complete | Themed, portal-based, replaces all native <select> |
-| ConfirmModal | ✅ Complete | Themed delete dialog, Escape to cancel |
-| Form validation | ✅ Complete | All forms: regex, touched state, inline errors, red borders, server error banner |
-| Favicon | ✅ Complete | Spark logo SVG favicon matching app logo |
-| Scrollbars | ✅ Complete | Custom dark themed scrollbars (webkit + firefox) |
-| Clients page (`/clients`) | ✅ Complete | List, search, status filter, inline status dropdown, edit, delete |
-| Edit Client modal | ✅ Complete | Pre-filled, same validation as Add |
-| Projects page (`/projects`) | ✅ Complete | List, search, status filter, inline status dropdown, overdue deadline, edit, delete |
-| Edit Project modal | ✅ Complete | Pre-filled, handles clientId as object or string |
-| Invoices page (`/invoices`) | ✅ Complete | List, summary cards, status dropdown, mark paid (stamps paidAt), delete |
-| Reminders page (`/reminders`) | ✅ Complete | Card list, mark done/undone, overdue/today highlights, sort by due date |
-| Add Client modal | ✅ Complete | Full form + validation, POST /api/clients |
-| Add Project modal | ✅ Complete | Client dropdown + validation, POST /api/projects |
-| Add Invoice modal | ✅ Complete | Line items, tax, live totals, POST /api/invoices |
-| Add Reminder modal | ✅ Complete | Calendar date picker, POST /api/reminders |
-| Edit Invoice modal | ✅ Complete | Pre-filled, line items, auto-stamps paidAt when marked paid |
-| Real-time refresh | ✅ Complete | RefreshContext — any modal save updates dashboard + sidebar instantly |
-| StatusBadge | ✅ Complete | All statuses handled (client + project + invoice) |
-| DateTimePicker | ✅ Complete | Custom dark calendar, month grid, time inputs, quick pills |
-| PageLoader | ✅ Complete | In-page spark animation, shown while data fetches on every page |
-| Settings page (`/settings`) | ✅ Complete | Profile (name, title, currency), read-only email, change password |
-| PDF invoice generation | ✅ Complete | pdf-lib dark A4 layout, GET /api/invoices/:id/pdf, blob download |
-| Avatar dropdown | ✅ Complete | Name/email header, Settings link, Sign out — replaces direct logout |
-| Notification bell | ✅ Complete | Reminders/projects/invoices due within 3 days, color-coded by urgency |
-| Responsive layout | ✅ Complete | Mobile bottom nav, sidebar hidden <lg, tables → cards on mobile, modals as bottom sheet |
+| Google OAuth | ✅ Complete | passport-google-oauth20, auto-verified |
+| GitHub OAuth | ✅ Complete | passport-github2, scope: user:email |
+| Loading screen | ✅ Complete | Animated spark logo |
+| Login / Register pages | ✅ Complete | Email/password + Google/GitHub buttons |
+| Dashboard | ✅ Complete | Real API data, stat cards, charts, activity |
+| Earnings chart | ✅ Complete | Monthly + Yearly toggle, cumulative |
+| Pipeline chart | ✅ Complete | Real data, empty state |
+| Sidebar | ✅ Complete | This Month, Follow-ups, Active Projects |
+| Quick Actions | ✅ Complete | All 4 modals working |
+| Navbar routing | ✅ Complete | Link-based (Ctrl+Click works) |
+| Clients page | ✅ Complete | List, search, filter, edit, delete |
+| Projects page | ✅ Complete | List, search, filter, edit, delete, overdue |
+| Invoices page | ✅ Complete | List, status, mark paid, PDF download, send by email |
+| Reminders page | ✅ Complete | Cards, mark done/undone, overdue highlights |
+| Settings page | ✅ Complete | Profile, currency (whitelist), change password |
+| PDF generation | ✅ Complete | pdf-lib dark A4, GET /api/invoices/:id/pdf |
+| Send invoice by email | ✅ Complete | POST /api/invoices/:id/send → PDF attachment via Gmail |
+| Daily email notifications | ✅ Complete | node-cron 9am — reminders + overdue invoices |
+| Notification bell | ✅ Complete | Due within 3 days, color-coded, Link-based |
+| Responsive layout | ✅ Complete | Mobile bottom nav, cards, bottom-sheet modals |
+| Security hardening | ✅ Complete | 9 findings fixed (see Security section) |
+| README | ✅ Complete | Setup instructions, stack, features |
 
 ### What's Next
 
 | Area | Status | Notes |
 |---|---|---|
-| Email notifications | 🔲 Not started | Resend API |
 | Deployment | 🔲 Not started | Vercel (frontend) + Railway (backend) |
 
 ### Known Issues / TODOs
 - Active Projects in sidebar shows fixed 50% progress bar — no real progress tracking in schema
-- Email verification flow (`isEmailVerified`) is in the schema but not enforced or implemented
-- Reports tab removed from navbar (replaced with Reminders) — no reports page planned yet
+- Reports tab removed from navbar — no reports page planned yet
+- OAuth requires credentials in `.env` — buttons show but redirect fails without them
+- Gmail SMTP requires App Password (2FA must be enabled on Gmail account)
