@@ -3,10 +3,11 @@ import Modal from '../ui/Modal';
 import Select from '../ui/Select';
 import api from '../../utils/api';
 import { useRefresh } from '../../context/RefreshContext';
+import type { Client } from '../../types';
 
 interface Props {
+  client: Client;
   onClose: () => void;
-  onCreated: () => void;
 }
 
 const SOURCE_OPTS = ['upwork', 'fiverr', 'instagram', 'referral', 'cold-email', 'other'].map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }));
@@ -57,9 +58,12 @@ function Field({ label, children, error, touched }: { label: string; children: R
   );
 }
 
-export default function AddClientModal({ onClose, onCreated }: Props) {
+export default function EditClientModal({ client, onClose }: Props) {
   const { refresh } = useRefresh();
-  const [form, setForm] = useState<F>({ name: '', email: '', phone: '', company: '', source: 'other', status: 'lead', notes: '' });
+  const [form, setForm] = useState<F>({
+    name: client.name, email: client.email, phone: client.phone,
+    company: client.company, source: client.source, status: client.status, notes: client.notes,
+  });
   const [touched, setTouched] = useState<Partial<Record<keyof F, boolean>>>({});
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -77,19 +81,18 @@ export default function AddClientModal({ onClose, onCreated }: Props) {
     setServerError('');
     setLoading(true);
     try {
-      await api.post('/api/clients', form);
+      await api.put(`/api/clients/${client._id}`, form);
       refresh();
-      onCreated();
       onClose();
     } catch {
-      setServerError('Failed to create client. Try again.');
+      setServerError('Failed to update client. Try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal title="New Client" onClose={onClose}>
+    <Modal title="Edit Client" onClose={onClose}>
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Name *" error={errors.name} touched={t('name')}>
@@ -136,7 +139,7 @@ export default function AddClientModal({ onClose, onCreated }: Props) {
             Cancel
           </button>
           <button type="submit" disabled={loading} className="px-5 py-2 rounded-[8px] text-[13px] font-semibold text-[#0C0E14] disabled:opacity-50 cursor-pointer hover:opacity-90 transition-opacity" style={{ background: 'var(--accent)' }}>
-            {loading ? 'Adding…' : 'Add Client'}
+            {loading ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
       </form>

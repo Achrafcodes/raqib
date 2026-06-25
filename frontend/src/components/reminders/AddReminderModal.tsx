@@ -1,5 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import Modal from '../ui/Modal';
+import Select from '../ui/Select';
 import DateTimePicker from '../ui/DateTimePicker';
 import api from '../../utils/api';
 import { useRefresh } from '../../context/RefreshContext';
@@ -39,6 +40,11 @@ export default function AddReminderModal({ onClose }: Props) {
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
+  const clientOpts = [
+    { value: '', label: 'No client' },
+    ...clients.map((c) => ({ value: c._id, label: c.name })),
+  ];
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) { setError('Title is required.'); return; }
@@ -67,10 +73,7 @@ export default function AddReminderModal({ onClose }: Props) {
         </Field>
 
         <Field label="Client">
-          <select value={form.clientId} onChange={(e) => set('clientId', e.target.value)} className={INPUT}>
-            <option value="">No client</option>
-            {clients.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
-          </select>
+          <Select value={form.clientId} onChange={(v) => set('clientId', v)} options={clientOpts} />
         </Field>
 
         <Field label="Due Date *">
@@ -87,12 +90,7 @@ export default function AddReminderModal({ onClose }: Props) {
           <button type="button" onClick={onClose} className="px-4 py-2 rounded-[8px] text-[13px] font-medium text-r-3 hover:text-r-1 hover:bg-r-s2 transition-all cursor-pointer">
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-5 py-2 rounded-[8px] text-[13px] font-semibold text-[#0C0E14] disabled:opacity-50 cursor-pointer hover:opacity-90 transition-opacity"
-            style={{ background: 'var(--accent)' }}
-          >
+          <button type="submit" disabled={loading} className="px-5 py-2 rounded-[8px] text-[13px] font-semibold text-[#0C0E14] disabled:opacity-50 cursor-pointer hover:opacity-90 transition-opacity" style={{ background: 'var(--accent)' }}>
             {loading ? 'Adding…' : 'Add Reminder'}
           </button>
         </div>

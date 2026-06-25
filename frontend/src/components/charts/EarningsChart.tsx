@@ -3,17 +3,30 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 interface Props {
   data: { month: string; value: number }[];
+  yearlyData: { month: string; value: number }[];
   totalEarned: number;
 }
 
 const RANGES = ['Monthly', 'Yearly'];
 
-export default function EarningsChart({ data, totalEarned }: Props) {
+function niceMax(max: number): number {
+  if (max === 0) return 1000;
+  const mag = Math.pow(10, Math.floor(Math.log10(max)));
+  const norm = max / mag;
+  const nice = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
+  return nice * mag;
+}
+
+
+export default function EarningsChart({ data, yearlyData, totalEarned }: Props) {
   const [range, setRange] = useState('Monthly');
 
-  const max = data.length ? Math.max(...data.map((d) => d.value)) : 14000;
-  const ceil = Math.ceil(max / 3500) * 3500 || 14000;
-  const ticks = [0, ceil / 4, ceil / 2, (ceil * 3) / 4, ceil];
+  const displayData = range === 'Yearly' ? yearlyData : data;
+
+  const max = displayData.length ? Math.max(...displayData.map((d) => d.value)) : 0;
+  const ceil = niceMax(max);
+  const step = ceil / 4;
+  const ticks = [0, step, step * 2, step * 3, ceil];
 
   return (
     <div className="bg-r-surface border border-r-border rounded-[10px] p-6 h-full flex flex-col justify-between">
@@ -41,9 +54,14 @@ export default function EarningsChart({ data, totalEarned }: Props) {
 
       <div className="h-[170px]">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -8 }}>
+          <LineChart data={displayData} margin={{ top: 4, right: 4, bottom: 0, left: -8 }}>
             <CartesianGrid horizontal vertical={false} stroke="var(--border)" strokeDasharray="0" />
-            <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: 'var(--text-3)' }} />
+            <XAxis
+              dataKey="month"
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 10, fill: 'var(--text-3)' }}
+            />
             <YAxis
               domain={[0, ceil]}
               ticks={ticks}

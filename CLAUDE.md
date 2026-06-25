@@ -214,7 +214,9 @@ GET    /api/:resource/:id
 PUT    /api/:resource/:id
 DELETE /api/:resource/:id
 PATCH  /api/reminders/:id/done   → mark reminder done
-GET    /api/invoices/:id/pdf     → PDF buffer (not yet implemented)
+GET    /api/invoices/:id/pdf     → PDF buffer (pdf-lib, dark branded A4)
+PUT    /api/user/profile         → update name, freelanceTitle, currency
+PUT    /api/user/password        → verify current password, hash new one
 ```
 
 ---
@@ -273,6 +275,7 @@ Vite dev server runs on port **5174** (set in `vite.config.ts` with `strictPort:
 - Global refresh via `RefreshContext` — call `refresh()` after any mutation; Dashboard + Sidebar both listen to `tick`
 - Modals: use `<Modal>` shell, close on Escape + outside click
 - No `Co-Authored-By: Claude` in git commits
+- After every substantial change, commit and push to `main` without waiting to be asked
 
 ---
 
@@ -297,6 +300,32 @@ Fallback: shows raw status string with muted styling if unknown.
 ### DateTimePicker
 Reusable dark calendar picker at `components/ui/DateTimePicker.tsx`.
 Props: `value: string` (ISO "YYYY-MM-DDTHH:mm"), `onChange: (v: string) => void`.
+
+### Select (custom dropdown)
+Reusable themed dropdown at `components/ui/Select.tsx`. Replaces all native `<select>` — uses `createPortal` to escape `overflow-hidden` containers.
+Props: `value`, `onChange`, `options: { value, label }[]`, `disabled?`, `className?`.
+
+### ConfirmModal
+Themed delete confirmation at `components/ui/ConfirmModal.tsx`. Red trash icon, backdrop blur, Escape to cancel.
+Props: `title`, `message`, `confirmLabel?`, `onConfirm`, `onCancel`, `loading?`.
+
+### StatusDropdown (inline, per-page)
+Colored inline dropdown used in Clients, Projects, Invoices tables. Built per-page (not a shared component) because each resource has different status options and colors. Always uses `createPortal` to avoid clipping.
+
+### Form validation pattern
+All forms use a `validate(form) → Errs` function + `touched` state map. Errors show inline below each field (icon + red text) only after blur or submit attempt. Invalid fields get `border-[var(--overdue)]`. Server errors render as a red banner. `noValidate` on all forms to suppress browser popups.
+
+### PageLoader
+Reusable in-page loader at `components/ui/PageLoader.tsx`. Used at the top of every page while data fetches (`if (loading) return <PageLoader />`). Smaller version of LoadingScreen — spark draw animation + pulsing dots, centered with `min-h-[60vh]`.
+
+### Notification bell
+Built into `Navbar.tsx`. Fetches reminders + projects + invoices on mount and on every `tick`. Shows items due within 3 days. Color-coded: red = overdue/today, yellow = tomorrow, green = 2–3 days. Count badge on bell. Each item navigates to its page on click.
+
+### Responsive layout
+- **Mobile (< md)**: bottom nav bar with 5 icon+label tabs, sidebar hidden, tables replaced with cards, filters stack vertically, modals slide up as bottom sheet
+- **Tablet (md–lg)**: desktop pill nav, sidebar still hidden
+- **Desktop (lg+)**: full layout — pill nav, 320px sidebar, tables
+- Modal: `items-end sm:items-center`, `rounded-t-[16px] sm:rounded-[12px]`, scrollable body with `max-h-[92dvh]`
 
 ---
 
@@ -330,36 +359,48 @@ Props: `value: string` (ISO "YYYY-MM-DDTHH:mm"), `onChange: (v: string) => void`
 | Backend API | ✅ Complete | All 5 resources + dashboard stats |
 | Auth (httpOnly cookie) | ✅ Complete | Login, register, logout, /me |
 | Loading screen | ✅ Complete | Animated spark logo, fades in |
-| Login / Register pages | ✅ Complete | Dark form, redirects if already logged in |
-| Dashboard page | ✅ Complete | Real API data, search, stat cards, charts, activity table |
-| Earnings chart | ✅ Complete | Real data, monthly/yearly toggle, dynamic Y-axis |
-| Pipeline chart | ✅ Complete | Real data, empty state when no clients |
+| Login / Register pages | ✅ Complete | Dark form, regex validation, inline errors, redirects if logged in |
+| Dashboard page | ✅ Complete | Real API data, search, stat cards, charts, activity table; Active Projects card navigates to /projects |
+| Dashboard stats bug fix | ✅ Complete | `aggregate` $match needs `new ObjectId(userId)` — string won't match |
+| Earnings chart | ✅ Complete | Monthly (cumulative daily, stops at today) + Yearly (cumulative monthly, stops at current month), dynamic Y-axis |
+| Pipeline chart | ✅ Complete | Real data, empty state when no projects; colors map project statuses: not-started=grey, in-progress=blue, review=yellow, done=green, cancelled=red |
 | Sidebar | ✅ Complete | This Month (real), Follow-ups (real), Active Projects (real) |
 | Quick Actions | ✅ Complete | All 4 buttons open working modals |
-| Add Client modal | ✅ Complete | Full form, POST /api/clients |
-| Add Project modal | ✅ Complete | Client dropdown, POST /api/projects |
+| Navbar tab routing | ✅ Complete | useNavigate + useLocation, active tab from URL |
+| Custom Select dropdown | ✅ Complete | Themed, portal-based, replaces all native <select> |
+| ConfirmModal | ✅ Complete | Themed delete dialog, Escape to cancel |
+| Form validation | ✅ Complete | All forms: regex, touched state, inline errors, red borders, server error banner |
+| Favicon | ✅ Complete | Spark logo SVG favicon matching app logo |
+| Scrollbars | ✅ Complete | Custom dark themed scrollbars (webkit + firefox) |
+| Clients page (`/clients`) | ✅ Complete | List, search, status filter, inline status dropdown, edit, delete |
+| Edit Client modal | ✅ Complete | Pre-filled, same validation as Add |
+| Projects page (`/projects`) | ✅ Complete | List, search, status filter, inline status dropdown, overdue deadline, edit, delete |
+| Edit Project modal | ✅ Complete | Pre-filled, handles clientId as object or string |
+| Invoices page (`/invoices`) | ✅ Complete | List, summary cards, status dropdown, mark paid (stamps paidAt), delete |
+| Reminders page (`/reminders`) | ✅ Complete | Card list, mark done/undone, overdue/today highlights, sort by due date |
+| Add Client modal | ✅ Complete | Full form + validation, POST /api/clients |
+| Add Project modal | ✅ Complete | Client dropdown + validation, POST /api/projects |
 | Add Invoice modal | ✅ Complete | Line items, tax, live totals, POST /api/invoices |
 | Add Reminder modal | ✅ Complete | Calendar date picker, POST /api/reminders |
+| Edit Invoice modal | ✅ Complete | Pre-filled, line items, auto-stamps paidAt when marked paid |
 | Real-time refresh | ✅ Complete | RefreshContext — any modal save updates dashboard + sidebar instantly |
 | StatusBadge | ✅ Complete | All statuses handled (client + project + invoice) |
 | DateTimePicker | ✅ Complete | Custom dark calendar, month grid, time inputs, quick pills |
+| PageLoader | ✅ Complete | In-page spark animation, shown while data fetches on every page |
+| Settings page (`/settings`) | ✅ Complete | Profile (name, title, currency), read-only email, change password |
+| PDF invoice generation | ✅ Complete | pdf-lib dark A4 layout, GET /api/invoices/:id/pdf, blob download |
+| Avatar dropdown | ✅ Complete | Name/email header, Settings link, Sign out — replaces direct logout |
+| Notification bell | ✅ Complete | Reminders/projects/invoices due within 3 days, color-coded by urgency |
+| Responsive layout | ✅ Complete | Mobile bottom nav, sidebar hidden <lg, tables → cards on mobile, modals as bottom sheet |
 
 ### What's Next
 
 | Area | Status | Notes |
 |---|---|---|
-| Clients page (`/clients`) | 🔲 Not started | Full list, edit, delete, status filter |
-| Projects page (`/projects`) | 🔲 Not started | Full list, edit, delete, status filter |
-| Invoices page (`/invoices`) | 🔲 Not started | Full list, edit, mark paid, PDF download |
-| Reminders page (`/reminders`) | 🔲 Not started | Full list, mark done, overdue highlight |
-| Settings page (`/settings`) | 🔲 Not started | Profile form, currency preference |
-| PDF invoice generation | 🔲 Not started | pdf-lib, GET /api/invoices/:id/pdf |
 | Email notifications | 🔲 Not started | Resend API |
-| Navbar tab routing | 🔲 Not started | Tabs currently don't navigate to pages |
 | Deployment | 🔲 Not started | Vercel (frontend) + Railway (backend) |
 
 ### Known Issues / TODOs
-- Navbar pill tabs are visual-only — clicking them doesn't navigate (router not wired to tabs yet)
 - Active Projects in sidebar shows fixed 50% progress bar — no real progress tracking in schema
-- Invoice `invoiceNumber` auto-generation (INV-001) needs to be verified in backend
 - Email verification flow (`isEmailVerified`) is in the schema but not enforced or implemented
+- Reports tab removed from navbar (replaced with Reminders) — no reports page planned yet

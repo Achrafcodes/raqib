@@ -2,25 +2,74 @@ import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NAME_RE = /^.{2,}$/;
+const PASSWORD_RE = /^.{8,}$/;
+
+type Fields = { name: string; email: string; password: string; freelanceTitle: string };
+type Errors = Partial<Record<keyof Fields, string>>;
+
+function validate(f: Fields): Errors {
+  const errs: Errors = {};
+  if (!f.name.trim()) errs.name = 'Full name is required.';
+  else if (!NAME_RE.test(f.name.trim())) errs.name = 'Name must be at least 2 characters.';
+  if (!f.email.trim()) errs.email = 'Email is required.';
+  else if (!EMAIL_RE.test(f.email)) errs.email = 'Enter a valid email address.';
+  if (!f.password) errs.password = 'Password is required.';
+  else if (!PASSWORD_RE.test(f.password)) errs.password = 'Password must be at least 8 characters.';
+  return errs;
+}
+
+const BASE = 'bg-r-surface border rounded-[8px] px-4 py-3 text-[13px] text-r-1 placeholder:text-r-3 outline-none transition-colors w-full';
+
+function Field({
+  label, children, error, touched, hint,
+}: { label: string; children: React.ReactNode; error?: string; touched: boolean; hint?: string }) {
+  const showError = touched && error;
+  return (
+    <div className="flex flex-col gap-[6px]">
+      <label className="text-[11px] font-semibold text-r-3 uppercase tracking-[0.08em]">{label}</label>
+      {children}
+      {showError ? (
+        <div className="flex items-center gap-[6px] mt-[2px]">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--overdue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span className="text-[11px]" style={{ color: 'var(--overdue)' }}>{error}</span>
+        </div>
+      ) : hint && !touched ? (
+        <span className="text-[11px] text-r-3 mt-[2px]">{hint}</span>
+      ) : null}
+    </div>
+  );
+}
+
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [freelanceTitle, setFreelanceTitle] = useState('');
-  const [error, setError] = useState('');
+  const [form, setForm] = useState<Fields>({ name: '', email: '', password: '', freelanceTitle: '' });
+  const [touched, setTouched] = useState<Partial<Record<keyof Fields, boolean>>>({});
+  const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const errors = validate(form);
+  const set = (k: keyof Fields, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const touch = (field: keyof Fields) => setTouched((t) => ({ ...t, [field]: true }));
+
+  const inputClass = (field: keyof Fields) =>
+    `${BASE} ${touched[field] && errors[field] ? 'border-[var(--overdue)]' : 'border-r-border focus:border-r-accent'}`;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError('');
+    setTouched({ name: true, email: true, password: true, freelanceTitle: true });
+    if (Object.keys(errors).length) return;
+    setServerError('');
     setLoading(true);
     try {
-      await register({ name, email, password, freelanceTitle });
+      await register(form);
       navigate('/');
     } catch {
-      setError('Registration failed. Please try again.');
+      setServerError('Registration failed. This email may already be in use.');
     } finally {
       setLoading(false);
     }
@@ -47,52 +96,62 @@ export default function Register() {
         <h1 className="text-[22px] font-bold text-r-1 mb-1">Create account</h1>
         <p className="text-[13px] text-r-3 mb-8">Start managing your freelance business</p>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-[6px]">
-            <label className="text-[11px] font-semibold text-r-3 uppercase tracking-[0.08em]">Full Name</label>
+        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+          <Field label="Full Name" error={errors.name} touched={!!touched.name}>
             <input
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
+              value={form.name}
+              onChange={(e) => set('name', e.target.value)}
+              onBlur={() => touch('name')}
               placeholder="Your name"
-              className="bg-r-surface border border-r-border rounded-[8px] px-4 py-3 text-[13px] text-r-1 placeholder:text-r-3 outline-none focus:border-r-accent transition-colors"
+              className={inputClass('name')}
             />
-          </div>
-          <div className="flex flex-col gap-[6px]">
-            <label className="text-[11px] font-semibold text-r-3 uppercase tracking-[0.08em]">Email</label>
+          </Field>
+
+          <Field label="Email" error={errors.email} touched={!!touched.email}>
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              value={form.email}
+              onChange={(e) => set('email', e.target.value)}
+              onBlur={() => touch('email')}
               placeholder="you@example.com"
-              className="bg-r-surface border border-r-border rounded-[8px] px-4 py-3 text-[13px] text-r-1 placeholder:text-r-3 outline-none focus:border-r-accent transition-colors"
+              className={inputClass('email')}
             />
-          </div>
-          <div className="flex flex-col gap-[6px]">
-            <label className="text-[11px] font-semibold text-r-3 uppercase tracking-[0.08em]">Freelance Title</label>
+          </Field>
+
+          <Field label="Freelance Title" error={errors.freelanceTitle} touched={!!touched.freelanceTitle} hint="Optional — e.g. Full-stack Developer">
             <input
               type="text"
-              value={freelanceTitle}
-              onChange={(e) => setFreelanceTitle(e.target.value)}
+              value={form.freelanceTitle}
+              onChange={(e) => set('freelanceTitle', e.target.value)}
+              onBlur={() => touch('freelanceTitle')}
               placeholder="e.g. Full-stack Developer"
-              className="bg-r-surface border border-r-border rounded-[8px] px-4 py-3 text-[13px] text-r-1 placeholder:text-r-3 outline-none focus:border-r-accent transition-colors"
+              className={inputClass('freelanceTitle')}
             />
-          </div>
-          <div className="flex flex-col gap-[6px]">
-            <label className="text-[11px] font-semibold text-r-3 uppercase tracking-[0.08em]">Password</label>
+          </Field>
+
+          <Field label="Password" error={errors.password} touched={!!touched.password} hint="At least 8 characters">
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              value={form.password}
+              onChange={(e) => set('password', e.target.value)}
+              onBlur={() => touch('password')}
               placeholder="••••••••"
-              className="bg-r-surface border border-r-border rounded-[8px] px-4 py-3 text-[13px] text-r-1 placeholder:text-r-3 outline-none focus:border-r-accent transition-colors"
+              className={inputClass('password')}
             />
-          </div>
+          </Field>
 
-          {error && <p className="text-[12px] text-[var(--overdue)]">{error}</p>}
+          {serverError && (
+            <div
+              className="flex items-start gap-3 px-4 py-3 rounded-[8px] border"
+              style={{ background: 'var(--overdue-bg)', borderColor: 'rgba(248,113,113,0.25)' }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--overdue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-[1px]">
+                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span className="text-[12px] leading-relaxed" style={{ color: 'var(--overdue)' }}>{serverError}</span>
+            </div>
+          )}
 
           <button
             type="submit"

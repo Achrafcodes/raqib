@@ -74,4 +74,30 @@
   }
 
   * { font-family: 'Space Grotesk', system-ui, sans-serif; }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+  * { scrollbar-width: thin; scrollbar-color: var(--border-2) transparent; }
+
+  /* Select dropdowns */
+  select {
+    background: var(--surface);
+    color: var(--text-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  select:hover { border-color: var(--border-2); }
+  select:focus { border-color: var(--accent); }
+  option {
+    background: var(--surface);
+    color: var(--text-1);
+  }
 }

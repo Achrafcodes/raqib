@@ -1,5 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import Modal from '../ui/Modal';
+import Select from '../ui/Select';
 import api from '../../utils/api';
 import { useRefresh } from '../../context/RefreshContext';
 import type { Client, Project } from '../../types';
@@ -9,6 +10,10 @@ interface Props { onClose: () => void }
 interface LineItem { description: string; quantity: number; unitPrice: number }
 
 const INPUT = 'w-full bg-r-bg border border-r-border rounded-[8px] px-3 py-[9px] text-[13px] text-r-1 placeholder:text-r-3 outline-none focus:border-r-accent transition-colors';
+
+const STATUS_OPTS = ['draft', 'sent', 'paid', 'overdue'].map((s) => ({
+  value: s, label: s.charAt(0).toUpperCase() + s.slice(1),
+}));
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -47,6 +52,15 @@ export default function AddInvoiceModal({ onClose }: Props) {
       setProjectId('');
     });
   }, [clientId]);
+
+  const clientOpts = [
+    { value: '', label: 'Select client' },
+    ...clients.map((c) => ({ value: c._id, label: c.name })),
+  ];
+  const projectOpts = [
+    { value: '', label: 'No project' },
+    ...projects.map((p) => ({ value: p._id, label: p.title })),
+  ];
 
   const setItem = (i: number, k: keyof LineItem, v: string) => {
     setItems((prev) => prev.map((item, idx) =>
@@ -90,30 +104,18 @@ export default function AddInvoiceModal({ onClose }: Props) {
   return (
     <Modal title="New Invoice" onClose={onClose}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* Client + Project */}
         <div className="grid grid-cols-2 gap-3">
           <Field label="Client *">
-            <select value={clientId} onChange={(e) => setClientId(e.target.value)} className={INPUT}>
-              <option value="">Select client</option>
-              {clients.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
-            </select>
+            <Select value={clientId} onChange={setClientId} options={clientOpts} />
           </Field>
           <Field label="Project">
-            <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className={INPUT} disabled={!clientId}>
-              <option value="">No project</option>
-              {projects.map((p) => <option key={p._id} value={p._id}>{p.title}</option>)}
-            </select>
+            <Select value={projectId} onChange={setProjectId} options={projectOpts} disabled={!clientId} />
           </Field>
         </div>
 
-        {/* Status + Due Date */}
         <div className="grid grid-cols-2 gap-3">
           <Field label="Status">
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className={INPUT}>
-              {['draft', 'sent', 'paid', 'overdue'].map((s) => (
-                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-              ))}
-            </select>
+            <Select value={status} onChange={setStatus} options={STATUS_OPTS} />
           </Field>
           <Field label="Due Date">
             <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={INPUT} />
@@ -126,40 +128,17 @@ export default function AddInvoiceModal({ onClose }: Props) {
             <label className="text-[10px] font-semibold text-r-3 uppercase tracking-[0.08em]">Line Items</label>
             <button type="button" onClick={addItem} className="text-[11px] font-medium text-r-accent hover:opacity-80 cursor-pointer">+ Add item</button>
           </div>
-
-          {/* Header */}
           <div className="grid grid-cols-[1fr_60px_80px_24px] gap-2 px-1">
             {['Description', 'Qty', 'Price', ''].map((h) => (
               <span key={h} className="text-[9px] font-semibold text-r-3 uppercase tracking-[0.08em]">{h}</span>
             ))}
           </div>
-
           {items.map((item, i) => (
             <div key={i} className="grid grid-cols-[1fr_60px_80px_24px] gap-2 items-center">
-              <input
-                value={item.description}
-                onChange={(e) => setItem(i, 'description', e.target.value)}
-                placeholder="Description"
-                className={INPUT}
-              />
-              <input
-                type="number" min="1"
-                value={item.quantity}
-                onChange={(e) => setItem(i, 'quantity', e.target.value)}
-                className={INPUT + ' text-center'}
-              />
-              <input
-                type="number" min="0" step="0.01"
-                value={item.unitPrice}
-                onChange={(e) => setItem(i, 'unitPrice', e.target.value)}
-                className={INPUT}
-              />
-              <button
-                type="button"
-                onClick={() => removeItem(i)}
-                disabled={items.length === 1}
-                className="text-r-3 hover:text-[var(--overdue)] transition-colors cursor-pointer disabled:opacity-30 text-[16px] leading-none"
-              >×</button>
+              <input value={item.description} onChange={(e) => setItem(i, 'description', e.target.value)} placeholder="Description" className={INPUT} />
+              <input type="number" min="1" value={item.quantity} onChange={(e) => setItem(i, 'quantity', e.target.value)} className={INPUT + ' text-center'} />
+              <input type="number" min="0" step="0.01" value={item.unitPrice} onChange={(e) => setItem(i, 'unitPrice', e.target.value)} className={INPUT} />
+              <button type="button" onClick={() => removeItem(i)} disabled={items.length === 1} className="text-r-3 hover:text-[var(--overdue)] transition-colors cursor-pointer disabled:opacity-30 text-[16px] leading-none">×</button>
             </div>
           ))}
         </div>
@@ -173,12 +152,7 @@ export default function AddInvoiceModal({ onClose }: Props) {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-r-3">Tax</span>
-              <input
-                type="number" min="0" max="100" step="0.5"
-                value={tax}
-                onChange={(e) => setTax(e.target.value)}
-                className="w-[56px] bg-r-bg border border-r-border rounded-[6px] px-2 py-[4px] text-[12px] text-r-1 outline-none focus:border-r-accent text-center"
-              />
+              <input type="number" min="0" max="100" step="0.5" value={tax} onChange={(e) => setTax(e.target.value)} className="w-[56px] bg-r-bg border border-r-border rounded-[6px] px-2 py-[4px] text-[12px] text-r-1 outline-none focus:border-r-accent text-center" />
               <span className="text-[12px] text-r-3">%</span>
             </div>
             <span className="text-[12px] font-medium text-r-1">${taxAmount.toFixed(2)}</span>
@@ -195,12 +169,7 @@ export default function AddInvoiceModal({ onClose }: Props) {
           <button type="button" onClick={onClose} className="px-4 py-2 rounded-[8px] text-[13px] font-medium text-r-3 hover:text-r-1 hover:bg-r-s2 transition-all cursor-pointer">
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-5 py-2 rounded-[8px] text-[13px] font-semibold text-[#0C0E14] disabled:opacity-50 cursor-pointer hover:opacity-90 transition-opacity"
-            style={{ background: 'var(--accent)' }}
-          >
+          <button type="submit" disabled={loading} className="px-5 py-2 rounded-[8px] text-[13px] font-semibold text-[#0C0E14] disabled:opacity-50 cursor-pointer hover:opacity-90 transition-opacity" style={{ background: 'var(--accent)' }}>
             {loading ? 'Creating…' : 'Create Invoice'}
           </button>
         </div>

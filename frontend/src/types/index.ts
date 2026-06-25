@@ -69,6 +69,7 @@ export interface DashboardStats {
   unpaidInvoices: number;
   followUpsDueToday: number;
   earningsChart: { month: string; earnings: number }[];
+  earningsYearlyChart: { month: string; earnings: number }[];
   pipelineBreakdown: Record<string, number>;
   recentActivity: { type: string; title: string; status: string; date: string }[];
 }

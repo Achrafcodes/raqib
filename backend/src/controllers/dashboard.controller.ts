@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import Invoice from '../models/Invoice.js';
 import Project from '../models/Project.js';
 import Reminder from '../models/Reminder.js';
@@ -7,7 +8,7 @@ import { AuthRequest } from '../types/index.js';
 
 export const getDashboardStats = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
+    const userId = new mongoose.Types.ObjectId(req.user?.id);
 
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -22,23 +23,39 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
         Project.countDocuments({ userId, status: 'in-progress' }),
         Invoice.countDocuments({ userId, status: { $in: ['sent', 'overdue'] } }),
         Reminder.countDocuments({ userId, isDone: false, dueDate: { $gte: startOfToday, $lt: endOfToday } }),
-        Invoice.find({ userId, status: 'paid' }).select('total createdAt').lean(),
+        Invoice.find({ userId, status: 'paid' }).select('total paidAt createdAt').lean(),
         Client.find({ userId }).sort({ createdAt: -1 }).limit(5).select('name status createdAt').lean(),
         Project.find({ userId }).sort({ createdAt: -1 }).limit(5).select('title status createdAt').lean(),
       ]);
 
-    // Earnings chart — last 12 months
+    // Monthly chart — cumulative daily earnings up to today
+    const daysInMonth = now.getDate(); // stop at today
     const earningsChart: { month: string; earnings: number }[] = [];
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const label = date.toLocaleString('default', { month: 'short', year: '2-digit' });
-      const monthEarnings = paidInvoices
+    let runningTotal = 0;
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayEarnings = paidInvoices
         .filter((inv) => {
-          const d = new Date(inv.createdAt);
-          return d.getFullYear() === date.getFullYear() && d.getMonth() === date.getMonth();
+          const d = new Date((inv as { paidAt?: Date; createdAt: Date }).paidAt ?? inv.createdAt);
+          return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === day;
         })
         .reduce((sum, inv) => sum + inv.total, 0);
-      earningsChart.push({ month: label, earnings: monthEarnings });
+      runningTotal += dayEarnings;
+      earningsChart.push({ month: String(day), earnings: runningTotal });
+    }
+
+    // Yearly chart — cumulative monthly earnings up to current month
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const earningsYearlyChart: { month: string; earnings: number }[] = [];
+    let yearRunning = 0;
+    for (let idx = 0; idx <= now.getMonth(); idx++) {
+      const monthEarnings = paidInvoices
+        .filter((inv) => {
+          const d = new Date((inv as { paidAt?: Date; createdAt: Date }).paidAt ?? inv.createdAt);
+          return d.getFullYear() === now.getFullYear() && d.getMonth() === idx;
+        })
+        .reduce((sum, inv) => sum + inv.total, 0);
+      yearRunning += monthEarnings;
+      earningsYearlyChart.push({ month: monthNames[idx], earnings: yearRunning });
     }
 
     // Pipeline breakdown
@@ -67,6 +84,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response): Promis
         unpaidInvoices,
         followUpsDueToday,
         earningsChart,
+        earningsYearlyChart,
         pipelineBreakdown,
         recentActivity,
       },

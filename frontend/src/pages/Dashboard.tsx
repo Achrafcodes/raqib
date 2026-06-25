@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import StatCard from '../components/ui/StatCard';
 import StatusBadge from '../components/ui/StatusBadge';
 import EarningsChart from '../components/charts/EarningsChart';
@@ -18,10 +19,13 @@ export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [search, setSearch] = useState('');
   const { tick } = useRefresh();
+  const navigate = useNavigate();
 
   useEffect(() => {
     api.get('/api/dashboard/stats').then((res) => setStats(res.data.data));
   }, [tick]);
+
+  if (!stats) return <PageLoader />;
 
   const today = new Date().toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -29,7 +33,7 @@ export default function Dashboard() {
 
   const statCards = [
     { label: 'Total Earned',    value: fmt(stats.totalEarned),           trendValue: 'all time',    trendText: '', trendColor: 'var(--paid)',    trendUp: true  },
-    { label: 'Active Projects', value: String(stats.activeProjects),      trendValue: 'in progress', trendText: '', trendColor: 'var(--paid)',    trendUp: true  },
+    { label: 'Active Projects', value: String(stats.activeProjects),      trendValue: 'in progress', trendText: '', trendColor: 'var(--paid)',    trendUp: true,  onClick: () => navigate('/projects') },
     { label: 'Unpaid Invoices', value: fmt(stats.unpaidInvoices),         trendValue: 'outstanding', trendText: '', trendColor: stats.unpaidInvoices > 0 ? 'var(--overdue)' : 'var(--paid)', trendUp: stats.unpaidInvoices === 0 },
     { label: 'Follow-ups Due',  value: String(stats.followUpsDueToday),   trendValue: 'due today',   trendText: '', trendColor: stats.followUpsDueToday > 0 ? 'var(--overdue)' : 'var(--paid)', trendUp: stats.followUpsDueToday === 0 },
   ];
@@ -37,10 +41,11 @@ export default function Dashboard() {
   const pipeline = Object.entries(stats.pipelineBreakdown).map(([label, value]) => ({
     label: label.charAt(0).toUpperCase() + label.slice(1),
     value,
-    color: label === 'lead' ? '#60A5FA' : label === 'negotiating' ? '#FBBF24' : label === 'active' ? '#4ADE80' : '#8899AA',
+    color: label === 'not-started' ? '#8899AA' : label === 'in-progress' ? '#60A5FA' : label === 'review' ? '#FBBF24' : label === 'done' ? '#4ADE80' : '#F87171',
   }));
 
   const chartData = stats.earningsChart.map((d) => ({ month: d.month, value: d.earnings }));
+  const yearlyChartData = (stats.earningsYearlyChart ?? []).map((d) => ({ month: d.month, value: d.earnings }));
 
   const filteredActivity = stats.recentActivity.filter(
     (r) =>
@@ -48,8 +53,6 @@ export default function Dashboard() {
       r.title.toLowerCase().includes(search.toLowerCase()) ||
       r.type.toLowerCase().includes(search.toLowerCase()),
   );
-
-  if (!stats) return <PageLoader />;
 
   return (
     <div className="flex flex-col gap-5">
@@ -72,13 +75,13 @@ export default function Dashboard() {
 
       {/* STAT CARDS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-[10px]">
-        {statCards.map((s) => <StatCard key={s.label} {...s} />)
+        {statCards.map((s) => <StatCard key={s.label} {...s} />)}
       </div>
 
       {/* CHARTS */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-[10px]">
         <div className="lg:col-span-3">
-          <EarningsChart data={chartData} totalEarned={stats.totalEarned} />
+          <EarningsChart data={chartData} yearlyData={yearlyChartData} totalEarned={stats.totalEarned} />
         </div>
         <div className="lg:col-span-2">
           <PipelineChart segments={pipeline} />

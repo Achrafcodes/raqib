@@ -3,9 +3,9 @@ import Modal from '../ui/Modal';
 import Select from '../ui/Select';
 import api from '../../utils/api';
 import { useRefresh } from '../../context/RefreshContext';
-import type { Client } from '../../types';
+import type { Client, Project } from '../../types';
 
-interface Props { onClose: () => void }
+interface Props { project: Project; onClose: () => void }
 
 const STATUS_OPTS = ['not-started', 'in-progress', 'review', 'done', 'cancelled'].map((s) => ({
   value: s, label: s.replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase()),
@@ -49,10 +49,22 @@ function Field({ label, children, error, touched }: { label: string; children: R
   );
 }
 
-export default function AddProjectModal({ onClose }: Props) {
+export default function EditProjectModal({ project, onClose }: Props) {
   const { refresh } = useRefresh();
   const [clients, setClients] = useState<Client[]>([]);
-  const [form, setForm] = useState<F>({ title: '', description: '', clientId: '', price: '', currency: 'USD', status: 'not-started', deadline: '' });
+
+  const clientId = typeof project.clientId === 'object' ? (project.clientId as { _id: string })._id : (project.clientId ?? '');
+  const deadlineVal = project.deadline ? project.deadline.slice(0, 10) : '';
+
+  const [form, setForm] = useState<F>({
+    title: project.title,
+    description: project.description,
+    clientId,
+    price: project.price?.toString() ?? '',
+    currency: project.currency,
+    status: project.status,
+    deadline: deadlineVal,
+  });
   const [touched, setTouched] = useState<Partial<Record<keyof F, boolean>>>({});
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -73,18 +85,18 @@ export default function AddProjectModal({ onClose }: Props) {
     setServerError('');
     setLoading(true);
     try {
-      await api.post('/api/projects', { ...form, price: parseFloat(form.price) || 0, clientId: form.clientId || undefined, deadline: form.deadline || undefined });
+      await api.put(`/api/projects/${project._id}`, { ...form, price: parseFloat(form.price) || 0, clientId: form.clientId || undefined, deadline: form.deadline || undefined });
       refresh();
       onClose();
     } catch {
-      setServerError('Failed to create project. Try again.');
+      setServerError('Failed to update project. Try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal title="New Project" onClose={onClose}>
+    <Modal title="Edit Project" onClose={onClose}>
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         <Field label="Title *" error={errors.title} touched={t('title')}>
           <input value={form.title} onChange={(e) => set('title', e.target.value)} onBlur={() => touch('title')} placeholder="Project title" className={inputCls(t('title'), !!errors.title)} />
@@ -128,7 +140,7 @@ export default function AddProjectModal({ onClose }: Props) {
         <div className="flex justify-end gap-2 mt-1">
           <button type="button" onClick={onClose} className="px-4 py-2 rounded-[8px] text-[13px] font-medium text-r-3 hover:text-r-1 hover:bg-r-s2 transition-all cursor-pointer">Cancel</button>
           <button type="submit" disabled={loading} className="px-5 py-2 rounded-[8px] text-[13px] font-semibold text-[#0C0E14] disabled:opacity-50 cursor-pointer hover:opacity-90 transition-opacity" style={{ background: 'var(--accent)' }}>
-            {loading ? 'Creating…' : 'Create Project'}
+            {loading ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
       </form>
