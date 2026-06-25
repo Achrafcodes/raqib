@@ -9,6 +9,7 @@ import projectRoutes from './src/routes/project.routes.js';
 import invoiceRoutes from './src/routes/invoice.routes.js';
 import reminderRoutes from './src/routes/reminder.routes.js';
 import dashboardRoutes from './src/routes/dashboard.routes.js';
+import userRoutes from './src/routes/user.routes.js';
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/reminders', reminderRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/user', userRoutes);
 
 const PORT = process.env.PORT ?? 5000;
 
