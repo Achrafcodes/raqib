@@ -77,7 +77,7 @@ export const logout = (_req: Request, res: Response): void => {
 };
 
 export const oauthCallback = (req: Request, res: Response): void => {
-  const user = req.user as IUser;
+  const user = req.user as unknown as IUser;
   if (!user) {
     res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
     return;

@@ -16,6 +16,7 @@ export interface IInvoice extends Document {
   subtotal: number;
   tax: number;
   total: number;
+  currency: string;
   status: 'draft' | 'sent' | 'paid' | 'overdue';
   dueDate: Date;
   paidAt: Date;
@@ -38,6 +39,7 @@ const InvoiceSchema = new Schema<IInvoice>({
   subtotal: { type: Number, required: true },
   tax: { type: Number, default: 0 },
   total: { type: Number, required: true },
+  currency: { type: String, default: 'USD' },
   status: {
     type: String,
     enum: ['draft', 'sent', 'paid', 'overdue'],
