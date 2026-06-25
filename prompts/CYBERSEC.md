@@ -34,14 +34,14 @@
 
 ## 🟡 Low
 
-- [ ] **L1 — JWT_SECRET Falls Back to `"undefined"` String**
+- [x] **L1 — JWT_SECRET Falls Back to `"undefined"` String**
   `auth.controller.ts:14`, `auth.middleware.ts:25` — no startup guard if env var is missing.
   Tokens silently signed with a known secret if server starts without `.env`.
 
-- [ ] **L2 — No Body Size Limit on `express.json()`**
+- [x] **L2 — No Body Size Limit on `express.json()`**
   `server.ts:31` — default 100kb limit not tightened.
   Attacker POSTs large payloads causing memory spikes.
 
-- [ ] **L3 — Currency Field Accepts Arbitrary Strings**
+- [x] **L3 — Currency Field Accepts Arbitrary Strings**
   `user.controller.ts:16` — no whitelist or sanitization on `currency` input.
   Stored XSS vector if currency value is ever rendered as raw HTML.

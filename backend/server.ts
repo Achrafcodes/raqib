@@ -15,6 +15,15 @@ import userRoutes from './src/routes/user.routes.js';
 
 dotenv.config();
 
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET env var is not set');
+  process.exit(1);
+}
+if (!process.env.MONGO_URI) {
+  console.error('FATAL: MONGO_URI env var is not set');
+  process.exit(1);
+}
+
 const app = express();
 
 const authLimiter = rateLimit({
@@ -40,7 +49,7 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '50kb' }));
 app.use(cookieParser());
 
 app.get('/api/health', (_req, res) => {

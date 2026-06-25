@@ -2,6 +2,8 @@ import { Response } from 'express';
 import User from '../models/User.js';
 import { AuthRequest } from '../types/index.js';
 
+const VALID_CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CHF', 'INR', 'MAD', 'AED', 'SAR', 'TRY', 'BRL', 'MXN', 'SGD', 'HKD', 'NOK', 'SEK', 'DKK', 'PLN'];
+
 export const updateProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { name, freelanceTitle, currency } = req.body;
@@ -11,9 +13,11 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
+    const safeCurrency = VALID_CURRENCIES.includes(currency) ? currency : 'USD';
+
     const user = await User.findByIdAndUpdate(
       req.user?.id,
-      { name: name.trim(), freelanceTitle: freelanceTitle?.trim() ?? '', currency: currency ?? 'USD' },
+      { name: name.trim(), freelanceTitle: freelanceTitle?.trim() ?? '', currency: safeCurrency },
       { new: true, runValidators: true }
     ).select('-password');
 
