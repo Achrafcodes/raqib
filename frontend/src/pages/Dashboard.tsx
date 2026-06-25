@@ -7,6 +7,7 @@ import { SearchIcon } from '../components/ui/Icons';
 import api from '../utils/api';
 import type { DashboardStats } from '../types';
 import { useRefresh } from '../context/RefreshContext';
+import PageLoader from '../components/ui/PageLoader';
 
 
 function fmt(n: number) {
@@ -26,31 +27,29 @@ export default function Dashboard() {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
 
-  const statCards = stats
-    ? [
-        { label: 'Total Earned',    value: fmt(stats.totalEarned),           trendValue: 'all time',   trendText: '',         trendColor: 'var(--paid)',    trendUp: true  },
-        { label: 'Active Projects', value: String(stats.activeProjects),      trendValue: 'in progress', trendText: '',       trendColor: 'var(--paid)',    trendUp: true  },
-        { label: 'Unpaid Invoices', value: fmt(stats.unpaidInvoices),         trendValue: 'outstanding', trendText: '',      trendColor: stats.unpaidInvoices > 0 ? 'var(--overdue)' : 'var(--paid)', trendUp: stats.unpaidInvoices === 0 },
-        { label: 'Follow-ups Due',  value: String(stats.followUpsDueToday),   trendValue: 'due today',  trendText: '',        trendColor: stats.followUpsDueToday > 0 ? 'var(--overdue)' : 'var(--paid)', trendUp: stats.followUpsDueToday === 0 },
-      ]
-    : null;
+  const statCards = [
+    { label: 'Total Earned',    value: fmt(stats.totalEarned),           trendValue: 'all time',    trendText: '', trendColor: 'var(--paid)',    trendUp: true  },
+    { label: 'Active Projects', value: String(stats.activeProjects),      trendValue: 'in progress', trendText: '', trendColor: 'var(--paid)',    trendUp: true  },
+    { label: 'Unpaid Invoices', value: fmt(stats.unpaidInvoices),         trendValue: 'outstanding', trendText: '', trendColor: stats.unpaidInvoices > 0 ? 'var(--overdue)' : 'var(--paid)', trendUp: stats.unpaidInvoices === 0 },
+    { label: 'Follow-ups Due',  value: String(stats.followUpsDueToday),   trendValue: 'due today',   trendText: '', trendColor: stats.followUpsDueToday > 0 ? 'var(--overdue)' : 'var(--paid)', trendUp: stats.followUpsDueToday === 0 },
+  ];
 
-  const pipeline = stats
-    ? Object.entries(stats.pipelineBreakdown).map(([label, value]) => ({
-        label: label.charAt(0).toUpperCase() + label.slice(1),
-        value,
-        color: label === 'lead' ? '#60A5FA' : label === 'negotiating' ? '#FBBF24' : label === 'active' ? '#4ADE80' : '#8899AA',
-      }))
-    : [];
+  const pipeline = Object.entries(stats.pipelineBreakdown).map(([label, value]) => ({
+    label: label.charAt(0).toUpperCase() + label.slice(1),
+    value,
+    color: label === 'lead' ? '#60A5FA' : label === 'negotiating' ? '#FBBF24' : label === 'active' ? '#4ADE80' : '#8899AA',
+  }));
 
-  const chartData = stats?.earningsChart.map((d) => ({ month: d.month, value: d.earnings })) ?? [];
+  const chartData = stats.earningsChart.map((d) => ({ month: d.month, value: d.earnings }));
 
-  const filteredActivity = (stats?.recentActivity ?? []).filter(
+  const filteredActivity = stats.recentActivity.filter(
     (r) =>
       !search ||
       r.title.toLowerCase().includes(search.toLowerCase()) ||
       r.type.toLowerCase().includes(search.toLowerCase()),
   );
+
+  if (!stats) return <PageLoader />;
 
   return (
     <div className="flex flex-col gap-5">
@@ -73,17 +72,13 @@ export default function Dashboard() {
 
       {/* STAT CARDS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-[10px]">
-        {statCards
-          ? statCards.map((s) => <StatCard key={s.label} {...s} />)
-          : Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-r-surface border border-r-border rounded-[8px] px-5 py-5 h-[110px] animate-pulse" />
-            ))}
+        {statCards.map((s) => <StatCard key={s.label} {...s} />)
       </div>
 
       {/* CHARTS */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-[10px]">
         <div className="lg:col-span-3">
-          <EarningsChart data={chartData} totalEarned={stats?.totalEarned ?? 0} />
+          <EarningsChart data={chartData} totalEarned={stats.totalEarned} />
         </div>
         <div className="lg:col-span-2">
           <PipelineChart segments={pipeline} />
@@ -97,13 +92,7 @@ export default function Dashboard() {
           <span className="text-[12px] font-medium text-r-accent cursor-pointer hover:opacity-80 transition-opacity">View all →</span>
         </div>
 
-        {!stats ? (
-          <div className="flex flex-col gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-[44px] bg-r-s2 rounded-[6px] animate-pulse" />
-            ))}
-          </div>
-        ) : filteredActivity.length === 0 ? (
+        {filteredActivity.length === 0 ? (
           <p className="text-[13px] text-r-3 text-center py-8">No activity yet.</p>
         ) : (
           <table className="w-full border-collapse">
