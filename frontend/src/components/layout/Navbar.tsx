@@ -2,6 +2,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { BellIcon, SettingsIcon } from '../ui/Icons';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../utils/api';
+import { useRefresh } from '../../context/RefreshContext';
 
 const TABS = [
   { label: 'Dashboard', path: '/' },
@@ -10,6 +12,58 @@ const TABS = [
   { label: 'Invoices',  path: '/invoices' },
   { label: 'Reminders', path: '/reminders' },
 ];
+
+interface Notif {
+  id: string;
+  type: 'reminder' | 'project' | 'invoice';
+  title: string;
+  dueDate: string;
+  path: string;
+}
+
+function notifColor(n: Notif): string {
+  const diff = new Date(n.dueDate).getTime() - Date.now();
+  if (diff < 0) return 'var(--overdue)';
+  if (diff < 86400000) return 'var(--overdue)';
+  if (diff < 86400000 * 2) return 'var(--pending)';
+  return 'var(--paid)';
+}
+
+function notifBg(n: Notif): string {
+  const diff = new Date(n.dueDate).getTime() - Date.now();
+  if (diff < 0) return 'var(--overdue-bg)';
+  if (diff < 86400000) return 'var(--overdue-bg)';
+  if (diff < 86400000 * 2) return 'var(--pending-bg)';
+  return 'var(--paid-bg)';
+}
+
+function notifLabel(n: Notif): string {
+  const diff = new Date(n.dueDate).getTime() - Date.now();
+  const typeLabel = n.type === 'reminder' ? 'Reminder' : n.type === 'project' ? 'Project deadline' : 'Invoice due';
+  if (diff < 0) return `${typeLabel} · Overdue`;
+  if (diff < 86400000) return `${typeLabel} · Due today`;
+  if (diff < 86400000 * 2) return `${typeLabel} · Due tomorrow`;
+  const days = Math.ceil(diff / 86400000);
+  return `${typeLabel} · In ${days} days`;
+}
+
+function NotifIcon({ type }: { type: Notif['type'] }) {
+  if (type === 'reminder') return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-r-1">
+      <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+  if (type === 'project') return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-r-1">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-r-1">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
+    </svg>
+  );
+}
 
 function RaqibLogo() {
   return (
@@ -43,16 +97,66 @@ export default function Navbar() {
     : 'YO';
 
   const activeTab = TABS.slice().reverse().find((t) => location.pathname.startsWith(t.path))?.path ?? '/';
+  const { tick } = useRefresh();
+
+  // Avatar menu
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Notification bell
+  const [bellOpen, setBellOpen] = useState(false);
+  const bellRef = useRef<HTMLDivElement>(null);
+  const [notifs, setNotifs] = useState<Notif[]>([]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+      if (!bellRef.current?.contains(e.target as Node)) setBellOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  useEffect(() => {
+    const now = new Date();
+    const in3Days = new Date(now.getTime() + 3 * 86400000);
+
+    Promise.all([
+      api.get('/api/reminders'),
+      api.get('/api/projects'),
+      api.get('/api/invoices'),
+    ]).then(([rRes, pRes, iRes]) => {
+      const items: Notif[] = [];
+
+      for (const r of rRes.data.data) {
+        if (r.isDone) continue;
+        const due = new Date(r.dueDate);
+        if (due <= in3Days) {
+          items.push({ id: r._id, type: 'reminder', title: r.title, dueDate: r.dueDate, path: '/reminders' });
+        }
+      }
+
+      for (const p of pRes.data.data) {
+        if (!p.deadline || p.status === 'done' || p.status === 'cancelled') continue;
+        const due = new Date(p.deadline);
+        if (due <= in3Days) {
+          items.push({ id: p._id, type: 'project', title: p.title, dueDate: p.deadline, path: '/projects' });
+        }
+      }
+
+      for (const inv of iRes.data.data) {
+        if (inv.status === 'paid') continue;
+        if (!inv.dueDate) continue;
+        const due = new Date(inv.dueDate);
+        if (due <= in3Days) {
+          items.push({ id: inv._id, type: 'invoice', title: inv.invoiceNumber, dueDate: inv.dueDate, path: '/invoices' });
+        }
+      }
+
+      items.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+      setNotifs(items);
+    }).catch(() => {});
+  }, [tick]);
 
   return (
     <>
@@ -85,16 +189,68 @@ export default function Navbar() {
 
         {/* RIGHT */}
         <div className="flex items-center gap-2">
-          <button
-            className="relative w-9 h-9 rounded-[8px] hidden sm:flex items-center justify-center text-r-2 hover:text-r-1 hover:bg-r-surface border border-transparent hover:border-r-border transition-all duration-150 cursor-pointer"
-            aria-label="Notifications"
-          >
-            <BellIcon size={17} />
-            <span
-              className="absolute top-[7px] right-[7px] w-[7px] h-[7px] rounded-full border-[1.5px] border-r-bg"
-              style={{ background: 'var(--overdue)' }}
-            />
-          </button>
+          {/* Bell dropdown */}
+          <div ref={bellRef} className="relative hidden sm:block">
+            <button
+              onClick={() => setBellOpen((p) => !p)}
+              className={`relative w-9 h-9 rounded-[8px] flex items-center justify-center border transition-all duration-150 cursor-pointer ${bellOpen ? 'text-r-1 bg-r-surface border-r-border' : 'text-r-2 hover:text-r-1 hover:bg-r-surface border-transparent hover:border-r-border'}`}
+              aria-label="Notifications"
+            >
+              <BellIcon size={17} />
+              {notifs.length > 0 && (
+                <span
+                  className="absolute top-[6px] right-[6px] min-w-[8px] h-[8px] rounded-full border-[1.5px] border-r-bg flex items-center justify-center"
+                  style={{ background: 'var(--overdue)' }}
+                />
+              )}
+            </button>
+
+            {bellOpen && (
+              <div
+                className="absolute right-0 top-[calc(100%+8px)] w-[300px] rounded-[10px] border border-r-border z-50 overflow-hidden"
+                style={{ background: 'var(--surface)', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}
+              >
+                <div className="flex items-center justify-between px-4 py-3 border-b border-r-border">
+                  <span className="text-[13px] font-semibold text-r-1">Notifications</span>
+                  {notifs.length > 0 && (
+                    <span className="text-[11px] font-semibold px-2 py-[2px] rounded-full" style={{ background: 'var(--overdue-bg)', color: 'var(--overdue)' }}>
+                      {notifs.length}
+                    </span>
+                  )}
+                </div>
+
+                {notifs.length === 0 ? (
+                  <div className="px-4 py-8 text-center">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: 'var(--surface-2)' }}>
+                      <BellIcon size={18} />
+                    </div>
+                    <p className="text-[13px] font-medium text-r-2">All clear!</p>
+                    <p className="text-[11px] text-r-3 mt-1">No upcoming deadlines</p>
+                  </div>
+                ) : (
+                  <div className="max-h-[320px] overflow-y-auto">
+                    {notifs.map((n) => (
+                      <button
+                        key={n.id}
+                        onClick={() => { navigate(n.path); setBellOpen(false); }}
+                        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-r-s2 transition-colors cursor-pointer border-b border-r-border last:border-0 text-left"
+                      >
+                        <div className="w-7 h-7 rounded-[6px] flex items-center justify-center shrink-0 mt-[1px]" style={{ background: notifBg(n) }}>
+                          <NotifIcon type={n.type} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[12px] font-semibold text-r-1 truncate">{n.title}</p>
+                          <p className="text-[11px] mt-[2px]" style={{ color: notifColor(n) }}>
+                            {notifLabel(n)}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="w-px h-5 bg-r-border mx-1 hidden sm:block" />
 
