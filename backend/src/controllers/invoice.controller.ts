@@ -21,9 +21,21 @@ export const getInvoices = async (req: AuthRequest, res: Response): Promise<void
   }
 };
 
+const validateInvoiceNumbers = (subtotal: number, tax: number, total: number): string | null => {
+  if (typeof subtotal !== 'number' || subtotal < 0) return 'subtotal must be a non-negative number';
+  if (typeof tax !== 'number' || tax < 0 || tax > 100) return 'tax must be between 0 and 100';
+  if (typeof total !== 'number' || total < 0) return 'total must be a non-negative number';
+  return null;
+};
+
 export const createInvoice = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { clientId, projectId, items, subtotal, tax, total, status, dueDate } = req.body;
+    const validationError = validateInvoiceNumbers(subtotal, tax, total);
+    if (validationError) {
+      res.status(400).json({ success: false, message: validationError });
+      return;
+    }
     const invoiceNumber = await getNextInvoiceNumber(req.user?.id as string);
     const invoice = await Invoice.create({ clientId, projectId, items, subtotal, tax, total, status, dueDate, userId: req.user?.id, invoiceNumber });
     res.status(201).json({ success: true, data: invoice });
@@ -50,6 +62,13 @@ export const getInvoice = async (req: AuthRequest, res: Response): Promise<void>
 export const updateInvoice = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { clientId, projectId, items, subtotal, tax, total, status, dueDate, paidAt } = req.body;
+    if (subtotal !== undefined || tax !== undefined || total !== undefined) {
+      const validationError = validateInvoiceNumbers(subtotal ?? 0, tax ?? 0, total ?? 0);
+      if (validationError) {
+        res.status(400).json({ success: false, message: validationError });
+        return;
+      }
+    }
     const invoice = await Invoice.findOneAndUpdate(
       { _id: req.params.id, userId: req.user?.id },
       { clientId, projectId, items, subtotal, tax, total, status, dueDate, paidAt },

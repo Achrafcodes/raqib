@@ -1,11 +1,20 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import { AuthRequest } from '../types/index.js';
 
 interface JwtPayload {
   id: string;
   email: string;
 }
+
+export const validateObjectId = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    res.status(400).json({ success: false, message: 'Invalid ID' });
+    return;
+  }
+  next();
+};
 
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void => {
   // Accept token from httpOnly cookie OR Authorization header

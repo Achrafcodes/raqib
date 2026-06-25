@@ -16,6 +16,10 @@ export const getProjects = async (req: AuthRequest, res: Response): Promise<void
 export const createProject = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { clientId, title, description, price, currency, status, deadline } = req.body;
+    if (typeof price !== 'number' || price < 0) {
+      res.status(400).json({ success: false, message: 'price must be a non-negative number' });
+      return;
+    }
     const project = await Project.create({ clientId, title, description, price, currency, status, deadline, userId: req.user?.id });
     res.status(201).json({ success: true, data: project });
   } catch {
@@ -42,6 +46,10 @@ export const getProject = async (req: AuthRequest, res: Response): Promise<void>
 export const updateProject = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { clientId, title, description, price, currency, status, deadline } = req.body;
+    if (price !== undefined && (typeof price !== 'number' || price < 0)) {
+      res.status(400).json({ success: false, message: 'price must be a non-negative number' });
+      return;
+    }
     const project = await Project.findOneAndUpdate(
       { _id: req.params.id, userId: req.user?.id },
       { clientId, title, description, price, currency, status, deadline },

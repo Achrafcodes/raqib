@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import authRoutes from './src/routes/auth.routes.js';
 import clientRoutes from './src/routes/client.routes.js';
 import projectRoutes from './src/routes/project.routes.js';
@@ -14,6 +16,16 @@ import userRoutes from './src/routes/user.routes.js';
 dotenv.config();
 
 const app = express();
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { success: false, message: 'Too many attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(helmet());
 
 const ALLOWED_ORIGINS = [
   process.env.CLIENT_URL ?? 'http://localhost:5174',
@@ -35,6 +47,8 @@ app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'Raqib API is running' });
 });
 
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/projects', projectRoutes);

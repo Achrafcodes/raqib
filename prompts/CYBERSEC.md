@@ -14,19 +14,19 @@
 
 ## 🟠 Medium
 
-- [ ] **M1 — No Rate Limiting on Auth Routes**
+- [x] **M1 — No Rate Limiting on Auth Routes**
   `server.ts` — no `express-rate-limit` on `/api/auth/login` or `/api/auth/register`.
   Enables brute-force password attacks with no throttling.
 
-- [ ] **M2 — No `helmet` Middleware**
+- [x] **M2 — No `helmet` Middleware**
   `server.ts:16` — missing security headers (X-Frame-Options, X-Content-Type-Options, HSTS, etc.).
   Enables clickjacking and MIME sniffing attacks.
 
-- [ ] **M3 — Invalid ObjectId Params Cause 500**
+- [x] **M3 — Invalid ObjectId Params Cause 500**
   All by-ID controllers — no `mongoose.isValidObjectId()` check before querying.
   Malformed `:id` triggers Mongoose CastError returned as 500 instead of 400.
 
-- [ ] **M4 — No Numeric Bounds Validation**
+- [x] **M4 — No Numeric Bounds Validation**
   `invoice.controller.ts:27`, `project.controller.ts:18` — `subtotal`, `total`, `price` have no `min` in schema.
   Attacker saves negative totals, corrupting earnings stats.
 
