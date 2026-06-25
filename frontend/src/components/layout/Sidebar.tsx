@@ -121,7 +121,7 @@ export default function Sidebar() {
       <div>
         <div className="flex justify-between items-center mb-3">
           <p className={LABEL}>Follow-ups</p>
-          <button className="text-r-3 hover:text-r-2 transition-colors cursor-pointer">
+          <button onClick={() => setShowAddReminder(true)} className="text-r-3 hover:text-r-2 transition-colors cursor-pointer">
             <PlusIcon size={16} />
           </button>
         </div>
