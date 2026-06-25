@@ -3,6 +3,7 @@ import Invoice from '../models/Invoice.js';
 import User from '../models/User.js';
 import { AuthRequest } from '../types/index.js';
 import { generateInvoicePDF } from '../utils/generatePDF.js';
+import { sendInvoiceEmail } from '../utils/sendEmail.js';
 
 const getNextInvoiceNumber = async (userId: string): Promise<string> => {
   const count = await Invoice.countDocuments({ userId });
@@ -134,6 +135,67 @@ export const downloadInvoicePDF = async (req: AuthRequest, res: Response): Promi
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: 'Failed to generate PDF' });
+  }
+};
+
+export const sendInvoiceByEmail = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const invoice = await Invoice.findOne({ _id: req.params.id, userId: req.user?.id })
+      .populate('clientId', 'name email')
+      .populate('projectId', 'title');
+
+    if (!invoice) {
+      res.status(404).json({ success: false, message: 'Invoice not found' });
+      return;
+    }
+
+    const client = invoice.clientId as unknown as { name: string; email?: string } | null;
+    if (!client?.email) {
+      res.status(400).json({ success: false, message: 'Client has no email address' });
+      return;
+    }
+
+    const user = await User.findById(req.user?.id).select('name freelanceTitle currency');
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+
+    const project = invoice.projectId as unknown as { title: string } | null;
+    const pdfBytes = await generateInvoicePDF({
+      invoiceNumber: invoice.invoiceNumber,
+      status: invoice.status,
+      dueDate: invoice.dueDate?.toISOString(),
+      paidAt: invoice.paidAt?.toISOString(),
+      createdAt: invoice.createdAt.toISOString(),
+      subtotal: invoice.subtotal,
+      tax: invoice.tax,
+      total: invoice.total,
+      items: invoice.items.map((item) => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        total: item.total,
+      })),
+      currency: user.currency ?? 'USD',
+      freelancerName: user.name,
+      freelanceTitle: user.freelanceTitle,
+      clientName: client.name,
+      clientEmail: client.email,
+      projectTitle: project?.title,
+    });
+
+    await sendInvoiceEmail(client.email, client.name, {
+      invoiceNumber: invoice.invoiceNumber,
+      total: invoice.total,
+      currency: user.currency ?? 'USD',
+      dueDate: invoice.dueDate?.toISOString(),
+    }, Buffer.from(pdfBytes));
+
+    res.json({ success: true, data: null });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Failed to send invoice email' });
   }
 };
 

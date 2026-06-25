@@ -67,12 +67,8 @@ export default function Register() {
     setServerError('');
     setLoading(true);
     try {
-      const result = await register(form);
-      if (result.requiresVerification) {
-        navigate('/check-email', { state: { email: result.email } });
-      } else {
-        navigate('/');
-      }
+      await register(form);
+      navigate('/');
     } catch {
       setServerError('Registration failed. This email may already be in use.');
     } finally {

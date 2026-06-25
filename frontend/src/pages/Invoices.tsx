@@ -114,6 +114,7 @@ export default function Invoices() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [sending, setSending] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -142,6 +143,13 @@ export default function Invoices() {
       setInvoices((prev) => prev.filter((i) => i._id !== confirmDelete._id));
       setConfirmDelete(null);
     } catch { /* silent */ } finally { setDeleting(null); }
+  };
+
+  const handleSendEmail = async (inv: Invoice) => {
+    setSending(inv._id);
+    try {
+      await api.post(`/api/invoices/${inv._id}/send`);
+    } catch { /* silent */ } finally { setSending(null); }
   };
 
   const handleDownloadPDF = async (inv: Invoice) => {
@@ -249,6 +257,13 @@ export default function Invoices() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                 )}
               </button>
+              <button onClick={() => handleSendEmail(inv)} disabled={sending === inv._id} className="w-7 h-7 rounded-[6px] flex items-center justify-center text-r-3 hover:text-r-1 hover:bg-r-bg transition-all cursor-pointer disabled:opacity-40" title="Send to client email">
+                {sending === inv._id ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
+                )}
+              </button>
               {inv.status !== 'paid' && (
                 <button onClick={() => handleStatusChange(inv, 'paid')} disabled={updatingStatus === inv._id} className="w-7 h-7 rounded-[6px] flex items-center justify-center hover:bg-r-bg transition-all cursor-pointer disabled:opacity-40" style={{ color: 'var(--paid)' }} title="Mark as paid">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -294,6 +309,13 @@ export default function Invoices() {
                 </button>
                 <button onClick={() => handleDownloadPDF(inv)} disabled={downloading === inv._id} className="w-8 h-8 rounded-[6px] flex items-center justify-center text-r-3 hover:text-r-1 hover:bg-r-bg transition-all cursor-pointer disabled:opacity-40">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                </button>
+                <button onClick={() => handleSendEmail(inv)} disabled={sending === inv._id} className="w-8 h-8 rounded-[6px] flex items-center justify-center text-r-3 hover:text-r-1 hover:bg-r-bg transition-all cursor-pointer disabled:opacity-40" title="Send to client email">
+                  {sending === inv._id ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
+                  )}
                 </button>
                 {inv.status !== 'paid' && (
                   <button onClick={() => handleStatusChange(inv, 'paid')} disabled={updatingStatus === inv._id} className="w-8 h-8 rounded-[6px] flex items-center justify-center hover:bg-r-bg transition-all cursor-pointer disabled:opacity-40" style={{ color: 'var(--paid)' }}>
