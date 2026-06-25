@@ -4,6 +4,7 @@ import api from '../utils/api';
 import { useRefresh } from '../context/RefreshContext';
 import type { Invoice } from '../types';
 import AddInvoiceModal from '../components/invoices/AddInvoiceModal';
+import EditInvoiceModal from '../components/invoices/EditInvoiceModal';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import PageLoader from '../components/ui/PageLoader';
 
@@ -109,6 +110,7 @@ export default function Invoices() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showAdd, setShowAdd] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<Invoice | null>(null);
+  const [editInvoice, setEditInvoice] = useState<Invoice | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
@@ -214,7 +216,7 @@ export default function Invoices() {
       {/* Table */}
       <div className="rounded-[12px] border border-r-border overflow-hidden" style={{ background: 'var(--surface)' }}>
         <div className="grid text-[10px] font-semibold text-r-3 uppercase tracking-[0.08em] px-5 py-3 border-b border-r-border"
-          style={{ gridTemplateColumns: '1fr 1.5fr 1fr 1fr 1fr 1fr 96px' }}>
+          style={{ gridTemplateColumns: '1fr 1.5fr 1fr 1fr 1fr 1fr 120px' }}>
           <span>Invoice</span>
           <span>Client / Project</span>
           <span>Amount</span>
@@ -232,7 +234,7 @@ export default function Invoices() {
           filtered.map((inv, i) => (
             <div key={inv._id}
               className={`grid items-center px-5 py-4 hover:bg-r-s2 transition-colors ${i < filtered.length - 1 ? 'border-b border-r-border' : ''}`}
-              style={{ gridTemplateColumns: '1fr 1.5fr 1fr 1fr 1fr 1fr 96px' }}>
+              style={{ gridTemplateColumns: '1fr 1.5fr 1fr 1fr 1fr 1fr 120px' }}>
 
               {/* Invoice number */}
               <p className="text-[12px] font-mono font-semibold text-r-1">{inv.invoiceNumber}</p>
@@ -262,6 +264,17 @@ export default function Invoices() {
 
               {/* Actions */}
               <div className="flex items-center gap-1 justify-end">
+                {/* Edit */}
+                <button
+                  onClick={() => setEditInvoice(inv)}
+                  className="w-7 h-7 rounded-[6px] flex items-center justify-center text-r-3 hover:text-r-1 hover:bg-r-bg transition-all cursor-pointer"
+                  title="Edit invoice"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </button>
                 {/* Download PDF */}
                 <button
                   onClick={() => handleDownloadPDF(inv)}
@@ -308,6 +321,7 @@ export default function Invoices() {
       </div>
 
       {showAdd && <AddInvoiceModal onClose={() => setShowAdd(false)} />}
+      {editInvoice && <EditInvoiceModal invoice={editInvoice} onClose={() => setEditInvoice(null)} />}
       {confirmDelete && (
         <ConfirmModal
           title="Delete invoice"
