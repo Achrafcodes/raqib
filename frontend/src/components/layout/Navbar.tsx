@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { BellIcon, SettingsIcon } from '../ui/Icons';
 import { useAuth } from '../../context/AuthContext';
@@ -90,7 +90,6 @@ function RaqibLogo() {
 
 export default function Navbar() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const avatarText = user?.name
     ? user.name.split(' ').slice(0, 2).map((p) => p[0]).join('').toUpperCase()
@@ -172,9 +171,9 @@ export default function Navbar() {
           {TABS.map((tab) => {
             const isActive = activeTab === tab.path;
             return (
-              <button
+              <Link
                 key={tab.path}
-                onClick={() => navigate(tab.path)}
+                to={tab.path}
                 className={`text-[13px] font-medium px-4 py-[6px] rounded-[999px] cursor-pointer transition-all duration-150 ${
                   isActive
                     ? 'bg-r-accent text-[#0C0E14] font-semibold'
@@ -182,7 +181,7 @@ export default function Navbar() {
                 }`}
               >
                 {tab.label}
-              </button>
+              </Link>
             );
           })}
         </div>
@@ -230,9 +229,10 @@ export default function Navbar() {
                 ) : (
                   <div className="max-h-[320px] overflow-y-auto">
                     {notifs.map((n) => (
-                      <button
+                      <Link
                         key={n.id}
-                        onClick={() => { navigate(n.path); setBellOpen(false); }}
+                        to={n.path}
+                        onClick={() => setBellOpen(false)}
                         className="w-full flex items-start gap-3 px-4 py-3 hover:bg-r-s2 transition-colors cursor-pointer border-b border-r-border last:border-0 text-left"
                       >
                         <div className="w-7 h-7 rounded-[6px] flex items-center justify-center shrink-0 mt-[1px]" style={{ background: notifBg(n) }}>
@@ -244,7 +244,7 @@ export default function Navbar() {
                             {notifLabel(n)}
                           </p>
                         </div>
-                      </button>
+                      </Link>
                     ))}
                   </div>
                 )}
@@ -273,13 +273,14 @@ export default function Navbar() {
                   <p className="text-[11px] text-r-3 truncate mt-[1px]">{user?.email}</p>
                 </div>
 
-                <button
-                  onClick={() => { navigate('/settings'); setMenuOpen(false); }}
+                <Link
+                  to="/settings"
+                  onClick={() => setMenuOpen(false)}
                   className="w-full flex items-center gap-3 px-4 py-[9px] text-[13px] text-r-2 hover:text-r-1 hover:bg-r-s2 transition-colors cursor-pointer"
                 >
                   <SettingsIcon size={15} />
                   Settings
-                </button>
+                </Link>
 
                 <div className="h-px bg-r-border mx-2 my-1" />
 
@@ -308,16 +309,16 @@ export default function Navbar() {
         {TABS.map((tab) => {
           const isActive = activeTab === tab.path;
           return (
-            <button
+            <Link
               key={tab.path}
-              onClick={() => navigate(tab.path)}
+              to={tab.path}
               className={`flex-1 flex flex-col items-center justify-center py-2 gap-[3px] transition-colors cursor-pointer ${
                 isActive ? 'text-r-accent' : 'text-r-3'
               }`}
             >
               <TabIcon path={tab.path} />
               <span className="text-[9px] font-semibold tracking-wide">{tab.label}</span>
-            </button>
+            </Link>
           );
         })}
       </nav>
