@@ -105,7 +105,7 @@ export default function Reminders() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         {[
           { label: 'Overdue',   value: overdueCount,   color: 'var(--overdue)' },
           { label: 'Due Today', value: dueTodayCount,  color: 'var(--pending)' },
@@ -119,9 +119,9 @@ export default function Reminders() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-wrap">
         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search reminders…"
-          className="bg-r-surface border border-r-border rounded-[8px] px-3 py-[8px] text-[13px] text-r-1 placeholder:text-r-3 outline-none focus:border-r-accent transition-colors w-56" />
+          className="bg-r-surface border border-r-border rounded-[8px] px-3 py-[8px] text-[13px] text-r-1 placeholder:text-r-3 outline-none focus:border-r-accent transition-colors w-full sm:w-56" />
         <div className="flex items-center gap-1 bg-r-surface border border-r-border rounded-[8px] p-1">
           {FILTERS.map((f) => (
             <button key={f} onClick={() => setFilter(f)}

@@ -54,12 +54,12 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col gap-5">
       {/* HEADER */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-[22px] font-bold text-r-1 tracking-tight">Dashboard</h1>
           <p className="text-[12px] text-r-3 mt-[3px]">{today}</p>
         </div>
-        <div className="flex items-center gap-2 bg-r-surface border border-r-border rounded-[8px] px-3 py-[7px] w-[240px]">
+        <div className="flex items-center gap-2 bg-r-surface border border-r-border rounded-[8px] px-3 py-[7px] w-full sm:w-[240px]">
           <SearchIcon size={14} className="text-r-3 shrink-0" />
           <input
             value={search}
@@ -98,28 +98,19 @@ export default function Dashboard() {
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                {['Type', 'Title', 'Status', 'Date'].map((h) => (
-                  <th key={h} className="text-[10px] font-semibold text-r-3 uppercase tracking-[0.08em] text-left pb-3 border-b border-r-border">
-                    {h}
-                  </th>
-                ))}
+                <th className="text-[10px] font-semibold text-r-3 uppercase tracking-[0.08em] text-left pb-3 border-b border-r-border hidden sm:table-cell">Type</th>
+                <th className="text-[10px] font-semibold text-r-3 uppercase tracking-[0.08em] text-left pb-3 border-b border-r-border">Title</th>
+                <th className="text-[10px] font-semibold text-r-3 uppercase tracking-[0.08em] text-left pb-3 border-b border-r-border">Status</th>
+                <th className="text-[10px] font-semibold text-r-3 uppercase tracking-[0.08em] text-left pb-3 border-b border-r-border hidden sm:table-cell">Date</th>
               </tr>
             </thead>
             <tbody>
               {filteredActivity.map((row, i) => (
                 <tr key={i} className="hover:bg-r-s2 transition-colors duration-100">
-                  <td className={`py-[14px] text-[12px] font-medium text-r-3 capitalize ${i < filteredActivity.length - 1 ? 'border-b border-r-border' : ''}`}>
-                    {row.type}
-                  </td>
-                  <td className={`py-[14px] text-[13px] font-semibold text-r-1 ${i < filteredActivity.length - 1 ? 'border-b border-r-border' : ''}`}>
-                    {row.title}
-                  </td>
-                  <td className={`py-[14px] ${i < filteredActivity.length - 1 ? 'border-b border-r-border' : ''}`}>
-                    <StatusBadge status={row.status} />
-                  </td>
-                  <td className={`py-[14px] text-[12px] text-r-3 ${i < filteredActivity.length - 1 ? 'border-b border-r-border' : ''}`}>
-                    {new Date(row.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                  </td>
+                  <td className={`py-[14px] text-[12px] font-medium text-r-3 capitalize hidden sm:table-cell ${i < filteredActivity.length - 1 ? 'border-b border-r-border' : ''}`}>{row.type}</td>
+                  <td className={`py-[14px] text-[13px] font-semibold text-r-1 ${i < filteredActivity.length - 1 ? 'border-b border-r-border' : ''}`}>{row.title}</td>
+                  <td className={`py-[14px] ${i < filteredActivity.length - 1 ? 'border-b border-r-border' : ''}`}><StatusBadge status={row.status} /></td>
+                  <td className={`py-[14px] text-[12px] text-r-3 hidden sm:table-cell ${i < filteredActivity.length - 1 ? 'border-b border-r-border' : ''}`}>{new Date(row.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</td>
                 </tr>
               ))}
             </tbody>

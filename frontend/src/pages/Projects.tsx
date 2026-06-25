@@ -162,85 +162,88 @@ export default function Projects() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search projects…"
-          className="bg-r-surface border border-r-border rounded-[8px] px-3 py-[8px] text-[13px] text-r-1 placeholder:text-r-3 outline-none focus:border-r-accent transition-colors w-56" />
-        <div className="flex items-center gap-1 bg-r-surface border border-r-border rounded-[8px] p-1 flex-wrap">
+          className="bg-r-surface border border-r-border rounded-[8px] px-3 py-[8px] text-[13px] text-r-1 placeholder:text-r-3 outline-none focus:border-r-accent transition-colors w-full sm:w-56" />
+        <div className="flex items-center gap-1 bg-r-surface border border-r-border rounded-[8px] p-1 overflow-x-auto">
           {STATUSES.map((s) => (
             <button key={s} onClick={() => setStatusFilter(s)}
-              className={`px-3 py-[5px] rounded-[6px] text-[12px] font-medium capitalize cursor-pointer transition-all ${statusFilter === s ? 'bg-r-accent text-[#0C0E14] font-semibold' : 'text-r-3 hover:text-r-1 hover:bg-r-s2'}`}>
+              className={`px-3 py-[5px] rounded-[6px] text-[12px] font-medium capitalize cursor-pointer transition-all whitespace-nowrap ${statusFilter === s ? 'bg-r-accent text-[#0C0E14] font-semibold' : 'text-r-3 hover:text-r-1 hover:bg-r-s2'}`}>
               {s.replace(/-/g, ' ')}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-[12px] border border-r-border overflow-hidden" style={{ background: 'var(--surface)' }}>
+      {/* Desktop table */}
+      <div className="hidden md:block rounded-[12px] border border-r-border overflow-hidden" style={{ background: 'var(--surface)' }}>
         <div className="grid text-[10px] font-semibold text-r-3 uppercase tracking-[0.08em] px-5 py-3 border-b border-r-border"
           style={{ gridTemplateColumns: '2fr 1.2fr 1fr 1fr 1fr 80px' }}>
-          <span>Project</span>
-          <span>Client</span>
-          <span>Price</span>
-          <span>Deadline</span>
-          <span>Status</span>
-          <span />
+          <span>Project</span><span>Client</span><span>Price</span><span>Deadline</span><span>Status</span><span />
         </div>
-
         {filtered.length === 0 ? (
           <div className="px-5 py-10 text-center text-[13px] text-r-3">
             {search || statusFilter !== 'all' ? 'No projects match your filters.' : 'No projects yet. Create your first one!'}
           </div>
-        ) : (
-          filtered.map((project, i) => (
-            <div key={project._id}
-              className={`grid items-center px-5 py-4 hover:bg-r-s2 transition-colors ${i < filtered.length - 1 ? 'border-b border-r-border' : ''}`}
-              style={{ gridTemplateColumns: '2fr 1.2fr 1fr 1fr 1fr 80px' }}>
+        ) : filtered.map((project, i) => (
+          <div key={project._id}
+            className={`grid items-center px-5 py-4 hover:bg-r-s2 transition-colors ${i < filtered.length - 1 ? 'border-b border-r-border' : ''}`}
+            style={{ gridTemplateColumns: '2fr 1.2fr 1fr 1fr 1fr 80px' }}>
+            <div className="min-w-0">
+              <p className="text-[13px] font-semibold text-r-1 truncate">{project.title}</p>
+              {project.description && <p className="text-[11px] text-r-3 truncate mt-[1px]">{project.description}</p>}
+            </div>
+            <p className="text-[12px] text-r-2 truncate">{clientName(project)}</p>
+            <p className="text-[12px] font-medium text-r-1 tabular-nums">{project.price > 0 ? `${project.currency} ${project.price.toLocaleString()}` : '—'}</p>
+            <p className={`text-[12px] ${isOverdue(project) ? '' : 'text-r-3'}`} style={isOverdue(project) ? { color: 'var(--overdue)' } : undefined}>
+              {formatDate(project.deadline)}{isOverdue(project) && <span className="ml-1 text-[10px]">overdue</span>}
+            </p>
+            <StatusDropdown status={project.status} disabled={updatingStatus === project._id} onChange={(s) => handleStatusChange(project, s)} />
+            <div className="flex items-center gap-1 justify-end">
+              <button onClick={() => setEditing(project)} className="w-7 h-7 rounded-[6px] flex items-center justify-center text-r-3 hover:text-r-1 hover:bg-r-bg transition-all cursor-pointer" title="Edit">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+              </button>
+              <button onClick={() => setConfirmDelete(project)} disabled={deleting === project._id} className="w-7 h-7 rounded-[6px] flex items-center justify-center text-r-3 hover:text-[#F87171] hover:bg-r-bg transition-all cursor-pointer disabled:opacity-40" title="Delete">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" /></svg>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
 
-              {/* Title */}
+      {/* Mobile cards */}
+      <div className="md:hidden flex flex-col gap-3">
+        {filtered.length === 0 ? (
+          <div className="py-10 text-center text-[13px] text-r-3">
+            {search || statusFilter !== 'all' ? 'No projects match your filters.' : 'No projects yet. Create your first one!'}
+          </div>
+        ) : filtered.map((project) => (
+          <div key={project._id} className="rounded-[12px] border border-r-border px-4 py-4" style={{ background: 'var(--surface)' }}>
+            <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-r-1 truncate">{project.title}</p>
-                {project.description && <p className="text-[11px] text-r-3 truncate mt-[1px]">{project.description}</p>}
+                <p className="text-[14px] font-semibold text-r-1 truncate">{project.title}</p>
+                <p className="text-[12px] text-r-3 mt-[2px]">{clientName(project)}</p>
               </div>
-
-              {/* Client */}
-              <p className="text-[12px] text-r-2 truncate">{clientName(project)}</p>
-
-              {/* Price */}
-              <p className="text-[12px] font-medium text-r-1 tabular-nums">
-                {project.price > 0 ? `${project.currency} ${project.price.toLocaleString()}` : '—'}
-              </p>
-
-              {/* Deadline */}
-              <p className={`text-[12px] ${isOverdue(project) ? '' : 'text-r-3'}`}
-                style={isOverdue(project) ? { color: 'var(--overdue)' } : undefined}>
-                {formatDate(project.deadline)}
-                {isOverdue(project) && <span className="ml-1 text-[10px]">overdue</span>}
-              </p>
-
-              {/* Status dropdown */}
-              <StatusDropdown status={project.status} disabled={updatingStatus === project._id} onChange={(s) => handleStatusChange(project, s)} />
-
-              {/* Actions */}
-              <div className="flex items-center gap-1 justify-end">
-                <button onClick={() => setEditing(project)}
-                  className="w-7 h-7 rounded-[6px] flex items-center justify-center text-r-3 hover:text-r-1 hover:bg-r-bg transition-all cursor-pointer" title="Edit">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
+              <div className="flex items-center gap-1 shrink-0">
+                <StatusDropdown status={project.status} disabled={updatingStatus === project._id} onChange={(s) => handleStatusChange(project, s)} />
+                <button onClick={() => setEditing(project)} className="w-8 h-8 rounded-[6px] flex items-center justify-center text-r-3 hover:text-r-1 hover:bg-r-bg transition-all cursor-pointer">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                 </button>
-                <button onClick={() => setConfirmDelete(project)} disabled={deleting === project._id}
-                  className="w-7 h-7 rounded-[6px] flex items-center justify-center text-r-3 hover:text-[#F87171] hover:bg-r-bg transition-all cursor-pointer disabled:opacity-40" title="Delete">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
-                  </svg>
+                <button onClick={() => setConfirmDelete(project)} disabled={deleting === project._id} className="w-8 h-8 rounded-[6px] flex items-center justify-center text-r-3 hover:text-[#F87171] hover:bg-r-bg transition-all cursor-pointer disabled:opacity-40">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" /></svg>
                 </button>
               </div>
             </div>
-          ))
-        )}
+            <div className="mt-3 pt-3 border-t border-r-border flex items-center justify-between flex-wrap gap-2">
+              {project.price > 0 && <span className="text-[13px] font-semibold text-r-1 tabular-nums">{project.currency} {project.price.toLocaleString()}</span>}
+              {project.deadline && (
+                <span className="text-[12px]" style={isOverdue(project) ? { color: 'var(--overdue)' } : { color: 'var(--text-3)' }}>
+                  {isOverdue(project) ? '⚠ ' : ''}{formatDate(project.deadline)}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
 
       {showAdd && <AddProjectModal onClose={() => setShowAdd(false)} />}

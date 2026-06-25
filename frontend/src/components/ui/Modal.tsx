@@ -15,16 +15,16 @@ export default function Modal({ title, onClose, children }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4"
       style={{ background: 'rgba(0,0,0,0.6)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="w-full max-w-[480px] rounded-[12px] border border-r-border flex flex-col"
+        className="w-full sm:max-w-[480px] rounded-t-[16px] sm:rounded-[12px] border border-r-border flex flex-col max-h-[92dvh] sm:max-h-[90vh]"
         style={{ background: 'var(--surface)' }}
       >
         {/* Header */}
-        <div className="flex justify-between items-center px-6 py-5 border-b border-r-border">
+        <div className="flex justify-between items-center px-5 py-4 sm:px-6 sm:py-5 border-b border-r-border shrink-0">
           <span className="text-[15px] font-semibold text-r-1">{title}</span>
           <button
             onClick={onClose}
@@ -34,7 +34,7 @@ export default function Modal({ title, onClose, children }: Props) {
           </button>
         </div>
         {/* Body */}
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-5 py-4 sm:px-6 sm:py-5 overflow-y-auto">{children}</div>
       </div>
     </div>
   );
