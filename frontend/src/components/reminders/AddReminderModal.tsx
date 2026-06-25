@@ -1,4 +1,5 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect } from 'react';
+import type { FormEvent } from 'react';
 import Modal from '../ui/Modal';
 import Select from '../ui/Select';
 import DateTimePicker from '../ui/DateTimePicker';

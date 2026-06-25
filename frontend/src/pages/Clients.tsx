@@ -27,7 +27,7 @@ const STATUSES = ['all', 'lead', 'negotiating', 'active', 'done', 'lost'];
 const INPUT = 'bg-r-surface border border-r-border rounded-[8px] px-3 py-[8px] text-[13px] text-r-1 placeholder:text-r-3 outline-none focus:border-r-accent transition-colors';
 
 export default function Clients() {
-  const { tick } = useRefresh();
+  const { tick, refresh } = useRefresh();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');

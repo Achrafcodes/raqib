@@ -74,7 +74,7 @@ export default function EarningsChart({ data, yearlyData, totalEarned }: Props) 
               contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}
               labelStyle={{ color: 'var(--text-1)' }}
               itemStyle={{ color: 'var(--text-1)' }}
-              formatter={(v: number) => [`$${v.toLocaleString()}`, 'Earnings']}
+              formatter={(v) => [`$${Number(v).toLocaleString()}`, 'Earnings']}
             />
             <Line type="monotone" dataKey="value" stroke="var(--accent)" strokeWidth={1.5} dot={false} />
           </LineChart>
