@@ -5,6 +5,7 @@ import { useRefresh } from '../context/RefreshContext';
 import type { Invoice } from '../types';
 import AddInvoiceModal from '../components/invoices/AddInvoiceModal';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import PageLoader from '../components/ui/PageLoader';
 
 const STATUSES = ['all', 'draft', 'sent', 'paid', 'overdue'];
 
@@ -164,6 +165,8 @@ export default function Invoices() {
     return matchStatus && matchSearch;
   });
 
+  if (loading) return <PageLoader />;
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -221,9 +224,7 @@ export default function Invoices() {
           <span />
         </div>
 
-        {loading ? (
-          <div className="px-5 py-10 text-center text-[13px] text-r-3">Loading…</div>
-        ) : filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="px-5 py-10 text-center text-[13px] text-r-3">
             {search || statusFilter !== 'all' ? 'No invoices match your filters.' : 'No invoices yet. Create your first one!'}
           </div>
