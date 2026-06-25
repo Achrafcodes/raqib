@@ -5,7 +5,7 @@ import type { User } from '../types';
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: { name: string; email: string; password: string; freelanceTitle?: string }) => Promise<void>;
+  register: (data: { name: string; email: string; password: string; freelanceTitle?: string }) => Promise<{ requiresVerification: boolean; email: string }>;
   logout: () => Promise<void>;
   updateUser: (u: User) => void;
   loading: boolean;
@@ -30,9 +30,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(res.data.data.user);
   };
 
-  const register = async (data: { name: string; email: string; password: string; freelanceTitle?: string }) => {
+  const register = async (data: { name: string; email: string; password: string; freelanceTitle?: string }): Promise<{ requiresVerification: boolean; email: string }> => {
     const res = await api.post('/api/auth/register', data);
-    setUser(res.data.data.user);
+    return res.data.data;
   };
 
   const logout = async () => {

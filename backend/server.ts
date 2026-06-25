@@ -5,7 +5,9 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import passport from 'passport';
 import { startNotificationCron } from './src/utils/notificationCron.js';
+import './src/utils/passport.js';
 import authRoutes from './src/routes/auth.routes.js';
 import clientRoutes from './src/routes/client.routes.js';
 import projectRoutes from './src/routes/project.routes.js';
@@ -52,6 +54,7 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '50kb' }));
 app.use(cookieParser());
+app.use(passport.initialize());
 
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'Raqib API is running' });

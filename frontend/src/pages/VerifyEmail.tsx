@@ -18,7 +18,11 @@ export default function VerifyEmail() {
     }
 
     api.get(`/auth/verify-email/${token}`)
-      .then(() => setStatus('success'))
+      .then(() => {
+        setStatus('success');
+        // Cookie is set by the backend — reload auth context after short delay
+        setTimeout(() => window.location.replace('/'), 1500);
+      })
       .catch((err) => {
         setStatus('error');
         setMessage(err.response?.data?.message ?? 'Verification failed. The link may have expired.');

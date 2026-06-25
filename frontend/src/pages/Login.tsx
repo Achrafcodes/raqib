@@ -1,7 +1,8 @@
 import { useState, FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import LoadingScreen from '../components/ui/LoadingScreen';
+import OAuthButtons from '../components/ui/OAuthButtons';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -37,6 +38,8 @@ function Field({
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const oauthError = searchParams.get('error') === 'oauth_failed';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [touched, setTouched] = useState({ email: false, password: false });
@@ -131,6 +134,20 @@ export default function Login() {
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        {oauthError && (
+          <div className="mt-4 flex items-start gap-3 px-4 py-3 rounded-[8px] border" style={{ background: 'var(--overdue-bg)', borderColor: 'rgba(248,113,113,0.25)' }}>
+            <span className="text-[12px] leading-relaxed" style={{ color: 'var(--overdue)' }}>OAuth sign-in failed. Please try again or use email/password.</span>
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 my-6">
+          <div className="flex-1 h-px bg-r-border" />
+          <span className="text-[11px] text-r-3 uppercase tracking-wider">or</span>
+          <div className="flex-1 h-px bg-r-border" />
+        </div>
+
+        <OAuthButtons />
 
         <p className="text-[12px] text-r-3 mt-6 text-center">
           No account?{' '}

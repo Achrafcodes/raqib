@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import OAuthButtons from '../components/ui/OAuthButtons';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const NAME_RE = /^.{2,}$/;
@@ -66,8 +67,12 @@ export default function Register() {
     setServerError('');
     setLoading(true);
     try {
-      await register(form);
-      navigate('/');
+      const result = await register(form);
+      if (result.requiresVerification) {
+        navigate('/check-email', { state: { email: result.email } });
+      } else {
+        navigate('/');
+      }
     } catch {
       setServerError('Registration failed. This email may already be in use.');
     } finally {
@@ -161,6 +166,14 @@ export default function Register() {
             {loading ? 'Creating account…' : 'Create account'}
           </button>
         </form>
+
+        <div className="flex items-center gap-3 my-6">
+          <div className="flex-1 h-px bg-r-border" />
+          <span className="text-[11px] text-r-3 uppercase tracking-wider">or</span>
+          <div className="flex-1 h-px bg-r-border" />
+        </div>
+
+        <OAuthButtons />
 
         <p className="text-[12px] text-r-3 mt-6 text-center">
           Already have an account?{' '}

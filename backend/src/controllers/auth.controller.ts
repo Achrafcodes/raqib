@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import User from '../models/User.js';
+import User, { IUser } from '../models/User.js';
 import { AuthRequest } from '../types/index.js';
 import { sendVerificationEmail } from '../utils/sendEmail.js';
 
@@ -53,9 +53,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Fire-and-forget — don't block registration if email fails
     sendVerificationEmail(user.email, user.name, verificationToken).catch(() => null);
 
-    const token = signToken(user._id.toString(), user.email);
-    res.cookie('token', token, COOKIE_OPTS);
-    res.status(201).json({ success: true, data: { user: userPayload(user) } });
+    // Don't set session cookie yet — user must verify email first
+    res.status(201).json({ success: true, data: { requiresVerification: true, email: user.email } });
   } catch {
     res.status(500).json({ success: false, message: 'Registration failed' });
   }
@@ -63,9 +62,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
 export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { token } = req.params;
+    const { token: verifyToken } = req.params;
     const user = await User.findOne({
-      emailVerificationToken: token,
+      emailVerificationToken: verifyToken,
       emailVerificationExpires: { $gt: new Date() },
     });
 
@@ -79,17 +78,27 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
     user.emailVerificationExpires = undefined;
     await user.save();
 
-    res.json({ success: true, data: null });
+    // Auto-login after verification
+    const jwtToken = signToken(user._id.toString(), user.email);
+    res.cookie('token', jwtToken, COOKIE_OPTS);
+    res.json({ success: true, data: { user: userPayload(user) } });
   } catch {
     res.status(500).json({ success: false, message: 'Verification failed' });
   }
 };
 
-export const resendVerification = async (req: AuthRequest, res: Response): Promise<void> => {
+export const resendVerification = async (req: Request, res: Response): Promise<void> => {
   try {
-    const user = await User.findById(req.user?.id);
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({ success: false, message: 'Email is required' });
+      return;
+    }
+
+    const user = await User.findOne({ email });
     if (!user) {
-      res.status(404).json({ success: false, message: 'User not found' });
+      // Don't leak whether email exists
+      res.json({ success: true, data: null });
       return;
     }
     if (user.isEmailVerified) {
@@ -135,6 +144,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 export const logout = (_req: Request, res: Response): void => {
   res.clearCookie('token', COOKIE_OPTS);
   res.json({ success: true, data: null });
+};
+
+export const oauthCallback = (req: Request, res: Response): void => {
+  const user = req.user as IUser;
+  if (!user) {
+    res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
+    return;
+  }
+  const token = signToken(user._id.toString(), user.email);
+  res.cookie('token', token, COOKIE_OPTS);
+  res.redirect(process.env.CLIENT_URL ?? 'http://localhost:5174');
 };
 
 export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
