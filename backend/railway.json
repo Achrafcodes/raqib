@@ -6,7 +6,7 @@
   "deploy": {
     "buildCommand": "npm install && npm run build",
     "startCommand": "npm start",
-    "healthcheckPath": "/",
+    "healthcheckPath": "/api/health",
     "restartPolicyType": "ON_FAILURE"
   }
 }

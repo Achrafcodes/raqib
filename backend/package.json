@@ -4,6 +4,9 @@
   "description": "Raqib freelancer CRM — backend API",
   "type": "module",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "tsx watch server.ts",
     "build": "tsc",
