@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { startNotificationCron } from './src/utils/notificationCron.js';
 import authRoutes from './src/routes/auth.routes.js';
 import clientRoutes from './src/routes/client.routes.js';
 import projectRoutes from './src/routes/project.routes.js';
@@ -73,6 +74,7 @@ mongoose
   .then(() => {
     console.log('MongoDB connected');
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    startNotificationCron();
   })
   .catch((err: Error) => {
     console.error('MongoDB connection failed:', err.message);

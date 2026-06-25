@@ -9,6 +9,7 @@ import Reminders from './pages/Reminders';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
 import LoadingScreen from './components/ui/LoadingScreen';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -29,6 +30,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
         <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route
           path="/*"
           element={

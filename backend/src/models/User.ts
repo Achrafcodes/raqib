@@ -8,6 +8,8 @@ export interface IUser extends Document {
   freelanceTitle: string;
   currency: string;
   isEmailVerified: boolean;
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
   createdAt: Date;
   comparePassword(candidate: string): Promise<boolean>;
 }
@@ -19,6 +21,8 @@ const UserSchema = new Schema<IUser>({
   freelanceTitle: { type: String, default: '' },
   currency: { type: String, default: 'USD' },
   isEmailVerified: { type: Boolean, default: false },
+  emailVerificationToken: { type: String },
+  emailVerificationExpires: { type: Date },
   createdAt: { type: Date, default: Date.now },
 });
 
