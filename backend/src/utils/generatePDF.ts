@@ -212,16 +212,17 @@ export async function generateInvoicePDF(data: PDFInvoiceData): Promise<Uint8Arr
     page.drawText(row.label, { x: totalsX, y, font: reg, size: 9, color: C.text2 });
     const vw = reg.widthOfTextAtSize(row.value, 9);
     page.drawText(row.value, { x: valX - vw, y, font: reg, size: 9, color: C.text1 });
-    y -= 16;
+    y -= 20;
   }
 
   // Total row — highlighted
-  drawRect(page, totalsX - 8, y - 6, width - PAD - totalsX + 8, 26, C.surface);
-  drawLine(page, totalsX - 8, y + 20, width - PAD, y + 20, C.border);
-  page.drawText('TOTAL', { x: totalsX, y: y + 6, font: bold, size: 10, color: C.text1 });
+  y -= 4;
+  drawRect(page, totalsX - 8, y - 8, width - PAD - totalsX + 8, 30, C.surface);
+  drawLine(page, totalsX - 8, y + 22, width - PAD, y + 22, C.border);
+  page.drawText('TOTAL', { x: totalsX, y: y + 7, font: bold, size: 10, color: C.text1 });
   const totalStr = fmtMoney(data.total, data.currency);
   const totalW = bold.widthOfTextAtSize(totalStr, 12);
-  page.drawText(totalStr, { x: valX - totalW, y: y + 4, font: bold, size: 12, color: C.accent });
+  page.drawText(totalStr, { x: valX - totalW, y: y + 5, font: bold, size: 12, color: C.accent });
   y -= 36;
 
   // ── Footer ───────────────────────────────────────────────────────
