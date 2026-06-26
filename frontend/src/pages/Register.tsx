@@ -78,9 +78,9 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-r-bg px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-r-bg px-4 py-10">
       <div className="w-full max-w-[400px]">
-        <div className="flex items-center gap-3 mb-10">
+        <div className="flex items-center gap-3 mb-6 sm:mb-10">
           <div className="w-[36px] h-[36px] rounded-[9px] flex items-center justify-center shrink-0"
             style={{ background: 'var(--surface)', border: '1px solid var(--border-2)' }}>
             <svg width="22" height="16" viewBox="0 0 22 16" fill="none">
@@ -95,10 +95,10 @@ export default function Register() {
           </div>
         </div>
 
-        <h1 className="text-[22px] font-bold text-r-1 mb-1">Create account</h1>
-        <p className="text-[13px] text-r-3 mb-8">Start managing your freelance business</p>
+        <h1 className="text-[20px] sm:text-[22px] font-bold text-r-1 mb-1">Create account</h1>
+        <p className="text-[13px] text-r-3 mb-5 sm:mb-8">Start managing your freelance business</p>
 
-        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3 sm:gap-4">
           <Field label="Full Name" error={errors.name} touched={!!touched.name}>
             <input
               type="text"
@@ -164,7 +164,7 @@ export default function Register() {
           </button>
         </form>
 
-        <div className="flex items-center gap-3 my-6">
+        <div className="flex items-center gap-3 my-4 sm:my-6">
           <div className="flex-1 h-px bg-r-border" />
           <span className="text-[11px] text-r-3 uppercase tracking-wider">or</span>
           <div className="flex-1 h-px bg-r-border" />

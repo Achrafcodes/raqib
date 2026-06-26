@@ -72,9 +72,9 @@ export default function Login() {
   if (loading) return <LoadingScreen />;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-r-bg px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-r-bg px-4 py-10">
       <div className="w-full max-w-[400px]">
-        <div className="flex items-center gap-3 mb-10">
+        <div className="flex items-center gap-3 mb-8 sm:mb-10">
           <div className="w-[36px] h-[36px] rounded-[9px] flex items-center justify-center shrink-0"
             style={{ background: 'var(--surface)', border: '1px solid var(--border-2)' }}>
             <svg width="22" height="16" viewBox="0 0 22 16" fill="none">
@@ -89,8 +89,8 @@ export default function Login() {
           </div>
         </div>
 
-        <h1 className="text-[22px] font-bold text-r-1 mb-1">Welcome back</h1>
-        <p className="text-[13px] text-r-3 mb-8">Sign in to your account</p>
+        <h1 className="text-[20px] sm:text-[22px] font-bold text-r-1 mb-1">Welcome back</h1>
+        <p className="text-[13px] text-r-3 mb-6 sm:mb-8">Sign in to your account</p>
 
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
           <Field label="Email" error={errors.email} touched={touched.email}>
@@ -142,7 +142,7 @@ export default function Login() {
           </div>
         )}
 
-        <div className="flex items-center gap-3 my-6">
+        <div className="flex items-center gap-3 my-4 sm:my-6">
           <div className="flex-1 h-px bg-r-border" />
           <span className="text-[11px] text-r-3 uppercase tracking-wider">or</span>
           <div className="flex-1 h-px bg-r-border" />
