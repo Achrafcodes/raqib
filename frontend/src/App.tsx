@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import VerifyEmail from './pages/VerifyEmail';
 import CheckEmail from './pages/CheckEmail';
+import OAuthCallback from './pages/OAuthCallback';
 import LoadingScreen from './components/ui/LoadingScreen';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
         <Route path="/check-email" element={<CheckEmail />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/oauth-callback" element={<OAuthCallback />} />
         <Route
           path="/*"
           element={

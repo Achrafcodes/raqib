@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import passport from 'passport';
-import { register, login, logout, getMe, oauthCallback } from '../controllers/auth.controller.js';
+import { register, login, logout, getMe, oauthCallback, setCookieFromToken } from '../controllers/auth.controller.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -15,5 +15,7 @@ router.get('/google/callback', passport.authenticate('google', { session: false,
 
 router.get('/github', passport.authenticate('github', { scope: ['user:email'], session: false }));
 router.get('/github/callback', passport.authenticate('github', { session: false, failureRedirect: `${process.env.CLIENT_URL}/login?error=oauth_failed` }), oauthCallback);
+
+router.post('/set-cookie', setCookieFromToken);
 
 export default router;

@@ -84,8 +84,23 @@ export const oauthCallback = (req: Request, res: Response): void => {
     return;
   }
   const token = signToken(user._id.toString(), user.email);
-  res.cookie('token', token, COOKIE_OPTS);
-  res.redirect(process.env.CLIENT_URL ?? 'http://localhost:5174');
+  const clientUrl = process.env.CLIENT_URL ?? 'http://localhost:5174';
+  res.redirect(`${clientUrl}/oauth-callback?token=${token}`);
+};
+
+export const setCookieFromToken = (req: Request, res: Response): void => {
+  try {
+    const { token } = req.body as { token?: string };
+    if (!token) {
+      res.status(400).json({ success: false, message: 'Token required' });
+      return;
+    }
+    const payload = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string; email: string };
+    res.cookie('token', token, COOKIE_OPTS);
+    res.json({ success: true, data: { id: payload.id, email: payload.email } });
+  } catch {
+    res.status(401).json({ success: false, message: 'Invalid token' });
+  }
 };
 
 export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
