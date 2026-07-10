@@ -25,7 +25,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function SuccessPrompt({ invoiceId, onClose }: { invoiceId: string; onClose: () => void }) {
+function SuccessPrompt({ invoiceId, onClose, onRefresh }: { invoiceId: string; onClose: () => void; onRefresh: () => void }) {
   const navigate = useNavigate();
   const [downloading, setDownloading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -61,8 +61,14 @@ function SuccessPrompt({ invoiceId, onClose }: { invoiceId: string; onClose: () 
   };
 
   const handleGoToInvoices = () => {
+    onRefresh();
     onClose();
     navigate('/invoices');
+  };
+
+  const handleClose = () => {
+    onRefresh();
+    onClose();
   };
 
   return (
@@ -132,7 +138,7 @@ function SuccessPrompt({ invoiceId, onClose }: { invoiceId: string; onClose: () 
         </div>
 
       <button
-        onClick={onClose}
+        onClick={handleClose}
         className="text-[12px] text-r-3 hover:text-r-1 transition-colors cursor-pointer text-center"
       >
         Close
@@ -210,8 +216,8 @@ export default function AddInvoiceModal({ onClose }: Props) {
         subtotal,
         total,
       });
-      refresh();
-      setCreatedId(res.data.data._id);
+      const id = res.data.data._id ?? res.data.data.id;
+      setCreatedId(String(id));
     } catch {
       setError('Failed to create invoice. Try again.');
     } finally {
@@ -222,7 +228,7 @@ export default function AddInvoiceModal({ onClose }: Props) {
   if (createdId) {
     return (
       <Modal title="Invoice Created" onClose={onClose}>
-        <SuccessPrompt invoiceId={createdId} onClose={onClose} />
+        <SuccessPrompt invoiceId={createdId} onClose={onClose} onRefresh={refresh} />
       </Modal>
     );
   }
