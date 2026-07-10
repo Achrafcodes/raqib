@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import Modal from '../ui/Modal';
 import Select from '../ui/Select';
@@ -13,10 +13,144 @@ interface Props {
 const SOURCE_OPTS = ['upwork', 'fiverr', 'instagram', 'referral', 'cold-email', 'other'].map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }));
 const STATUS_OPTS = ['lead', 'negotiating', 'active', 'done', 'lost'].map((s) => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) }));
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_RE = /^\+?[\d\s\-().]{6,20}$/;
+const COUNTRY_CODES = [
+  { code: '+1',   flag: '🇺🇸', name: 'US' },
+  { code: '+1',   flag: '🇨🇦', name: 'CA' },
+  { code: '+44',  flag: '🇬🇧', name: 'GB' },
+  { code: '+33',  flag: '🇫🇷', name: 'FR' },
+  { code: '+49',  flag: '🇩🇪', name: 'DE' },
+  { code: '+39',  flag: '🇮🇹', name: 'IT' },
+  { code: '+34',  flag: '🇪🇸', name: 'ES' },
+  { code: '+31',  flag: '🇳🇱', name: 'NL' },
+  { code: '+46',  flag: '🇸🇪', name: 'SE' },
+  { code: '+47',  flag: '🇳🇴', name: 'NO' },
+  { code: '+45',  flag: '🇩🇰', name: 'DK' },
+  { code: '+358', flag: '🇫🇮', name: 'FI' },
+  { code: '+41',  flag: '🇨🇭', name: 'CH' },
+  { code: '+43',  flag: '🇦🇹', name: 'AT' },
+  { code: '+32',  flag: '🇧🇪', name: 'BE' },
+  { code: '+351', flag: '🇵🇹', name: 'PT' },
+  { code: '+48',  flag: '🇵🇱', name: 'PL' },
+  { code: '+7',   flag: '🇷🇺', name: 'RU' },
+  { code: '+380', flag: '🇺🇦', name: 'UA' },
+  { code: '+90',  flag: '🇹🇷', name: 'TR' },
+  { code: '+971', flag: '🇦🇪', name: 'AE' },
+  { code: '+966', flag: '🇸🇦', name: 'SA' },
+  { code: '+972', flag: '🇮🇱', name: 'IL' },
+  { code: '+91',  flag: '🇮🇳', name: 'IN' },
+  { code: '+92',  flag: '🇵🇰', name: 'PK' },
+  { code: '+880', flag: '🇧🇩', name: 'BD' },
+  { code: '+94',  flag: '🇱🇰', name: 'LK' },
+  { code: '+86',  flag: '🇨🇳', name: 'CN' },
+  { code: '+81',  flag: '🇯🇵', name: 'JP' },
+  { code: '+82',  flag: '🇰🇷', name: 'KR' },
+  { code: '+65',  flag: '🇸🇬', name: 'SG' },
+  { code: '+60',  flag: '🇲🇾', name: 'MY' },
+  { code: '+62',  flag: '🇮🇩', name: 'ID' },
+  { code: '+63',  flag: '🇵🇭', name: 'PH' },
+  { code: '+66',  flag: '🇹🇭', name: 'TH' },
+  { code: '+84',  flag: '🇻🇳', name: 'VN' },
+  { code: '+61',  flag: '🇦🇺', name: 'AU' },
+  { code: '+64',  flag: '🇳🇿', name: 'NZ' },
+  { code: '+55',  flag: '🇧🇷', name: 'BR' },
+  { code: '+54',  flag: '🇦🇷', name: 'AR' },
+  { code: '+52',  flag: '🇲🇽', name: 'MX' },
+  { code: '+57',  flag: '🇨🇴', name: 'CO' },
+  { code: '+56',  flag: '🇨🇱', name: 'CL' },
+  { code: '+51',  flag: '🇵🇪', name: 'PE' },
+  { code: '+58',  flag: '🇻🇪', name: 'VE' },
+  { code: '+20',  flag: '🇪🇬', name: 'EG' },
+  { code: '+27',  flag: '🇿🇦', name: 'ZA' },
+  { code: '+234', flag: '🇳🇬', name: 'NG' },
+  { code: '+254', flag: '🇰🇪', name: 'KE' },
+  { code: '+212', flag: '🇲🇦', name: 'MA' },
+  { code: '+213', flag: '🇩🇿', name: 'DZ' },
+  { code: '+216', flag: '🇹🇳', name: 'TN' },
+];
 
-type F = { name: string; email: string; phone: string; company: string; source: string; status: string; notes: string };
+function CountryCodePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const selected = COUNTRY_CODES.find((c) => c.code === value && c.name === COUNTRY_CODES.find(x => x.code === value)?.name) ?? COUNTRY_CODES.find((c) => c.code === value) ?? COUNTRY_CODES[0];
+
+  const filtered = search
+    ? COUNTRY_CODES.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()) || c.code.includes(search))
+    : COUNTRY_CODES;
+
+  useEffect(() => {
+    if (open) setTimeout(() => searchRef.current?.focus(), 50);
+  }, [open]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const select = (c: typeof COUNTRY_CODES[0]) => {
+    onChange(c.code);
+    setOpen(false);
+    setSearch('');
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-[6px] h-full px-3 rounded-l-[8px] border border-r-border bg-r-bg text-[13px] text-r-1 hover:border-r-accent transition-colors cursor-pointer whitespace-nowrap"
+        style={{ borderRight: 'none' }}
+      >
+        <span className="text-[16px] leading-none">{selected?.flag}</span>
+        <span className="text-r-3 text-[12px]">{value}</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${open ? 'rotate-180' : ''}`}>
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          className="absolute left-0 top-full mt-1 z-50 rounded-[8px] overflow-hidden"
+          style={{ background: 'var(--surface)', border: '1px solid var(--border)', width: '180px', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+        >
+          <div className="p-2 border-b" style={{ borderColor: 'var(--border)' }}>
+            <input
+              ref={searchRef}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search…"
+              className="w-full bg-r-bg border border-r-border rounded-[6px] px-2 py-[5px] text-[12px] text-r-1 placeholder:text-r-3 outline-none focus:border-r-accent"
+            />
+          </div>
+          <div className="overflow-y-auto max-h-[200px]">
+            {filtered.map((c, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => select(c)}
+                className="flex items-center gap-2 w-full px-3 py-[7px] text-left hover:bg-r-s2 transition-colors cursor-pointer"
+              >
+                <span className="text-[15px]">{c.flag}</span>
+                <span className="text-[12px] text-r-1 font-medium">{c.name}</span>
+                <span className="text-[11px] text-r-3 ml-auto">{c.code}</span>
+              </button>
+            ))}
+            {filtered.length === 0 && <p className="text-[12px] text-r-3 px-3 py-3">No results</p>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type F = { name: string; email: string; countryCode: string; phoneNumber: string; company: string; source: string; status: string; notes: string };
 type Errs = Partial<Record<keyof F, string>>;
 
 function validate(f: F): Errs {
@@ -25,8 +159,8 @@ function validate(f: F): Errs {
   else if (f.name.trim().length < 2) e.name = 'Name must be at least 2 characters.';
   if (!f.email.trim()) e.email = 'Email is required.';
   else if (!EMAIL_RE.test(f.email)) e.email = 'Enter a valid email address.';
-  if (!f.phone.trim()) e.phone = 'Phone is required.';
-  else if (!PHONE_RE.test(f.phone)) e.phone = 'Enter a valid phone number.';
+  if (!f.phoneNumber.trim()) e.phoneNumber = 'Phone is required.';
+  else if (!/^[\d\s\-().]{4,15}$/.test(f.phoneNumber)) e.phoneNumber = 'Enter a valid phone number.';
   if (!f.company.trim()) e.company = 'Company is required.';
   return e;
 }
@@ -60,7 +194,7 @@ function Field({ label, children, error, touched }: { label: string; children: R
 
 export default function AddClientModal({ onClose, onCreated }: Props) {
   const { refresh } = useRefresh();
-  const [form, setForm] = useState<F>({ name: '', email: '', phone: '', company: '', source: 'other', status: 'lead', notes: '' });
+  const [form, setForm] = useState<F>({ name: '', email: '', countryCode: '+1', phoneNumber: '', company: '', source: 'other', status: 'lead', notes: '' });
   const [touched, setTouched] = useState<Partial<Record<keyof F, boolean>>>({});
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -78,7 +212,8 @@ export default function AddClientModal({ onClose, onCreated }: Props) {
     setServerError('');
     setLoading(true);
     try {
-      await api.post('/api/clients', form);
+      const phone = `${form.countryCode} ${form.phoneNumber}`;
+      await api.post('/api/clients', { ...form, phone });
       refresh();
       onCreated();
       onClose();
@@ -105,8 +240,17 @@ export default function AddClientModal({ onClose, onCreated }: Props) {
           <Field label="Email *" error={errors.email} touched={t('email')}>
             <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} onBlur={() => touch('email')} placeholder="client@email.com" className={inputCls(t('email'), !!errors.email)} />
           </Field>
-          <Field label="Phone *" error={errors.phone} touched={t('phone')}>
-            <input value={form.phone} onChange={(e) => set('phone', e.target.value)} onBlur={() => touch('phone')} placeholder="+1 234 567 890" className={inputCls(t('phone'), !!errors.phone)} />
+          <Field label="Phone *" error={errors.phoneNumber} touched={t('phoneNumber')}>
+            <div className="flex">
+              <CountryCodePicker value={form.countryCode} onChange={(v) => set('countryCode', v)} />
+              <input
+                value={form.phoneNumber}
+                onChange={(e) => set('phoneNumber', e.target.value)}
+                onBlur={() => touch('phoneNumber')}
+                placeholder="234 567 890"
+                className={`flex-1 bg-r-bg border py-[9px] px-3 text-[13px] text-r-1 placeholder:text-r-3 outline-none transition-colors rounded-r-[8px] ${t('phoneNumber') && errors.phoneNumber ? 'border-[var(--overdue)]' : 'border-r-border focus:border-r-accent'}`}
+              />
+            </div>
           </Field>
         </div>
 
