@@ -21,7 +21,7 @@ export default function OAuthCallback() {
 
     api.post('/api/auth/set-cookie', { token })
       .then(() => {
-        window.location.href = '/';
+        window.location.href = '/dashboard';
       })
       .catch(() => {
         navigate('/login?error=oauth_failed');

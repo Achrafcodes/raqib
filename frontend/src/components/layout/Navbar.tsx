@@ -6,7 +6,7 @@ import api from '../../utils/api';
 import { useRefresh } from '../../context/RefreshContext';
 
 const TABS = [
-  { label: 'Dashboard', path: '/' },
+  { label: 'Dashboard', path: '/dashboard' },
   { label: 'Clients',   path: '/clients' },
   { label: 'Projects',  path: '/projects' },
   { label: 'Invoices',  path: '/invoices' },
@@ -164,7 +164,9 @@ export default function Navbar() {
         style={{ borderBottomColor: 'var(--border)' }}
       >
         {/* LEFT — Logo */}
-        <RaqibLogo />
+        <Link to="/" className="focus:outline-none">
+          <RaqibLogo />
+        </Link>
 
         {/* CENTER — Nav tabs (desktop only) */}
         <div className="hidden md:flex items-center bg-r-surface border border-r-border rounded-[999px] p-1 gap-[2px]">
