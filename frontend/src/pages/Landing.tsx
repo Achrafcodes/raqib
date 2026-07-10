@@ -40,7 +40,7 @@ const FEATURES = [
       </svg>
     ),
     title: 'Project Tracking',
-    desc: 'See every project status at a glance. Never lose track of what's in progress, paused, or overdue.',
+    desc: "See every project status at a glance. Never lose track of what's in progress, paused, or overdue.",
   },
   {
     icon: (
