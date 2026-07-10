@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../ui/Modal';
-import api from '../../utils/api';
+import api from '../../utils/api'; // used for PDF download
 
 interface Props {
   invoiceId: string;
@@ -11,9 +11,6 @@ interface Props {
 export default function InvoiceSuccessModal({ invoiceId, onClose }: Props) {
   const navigate = useNavigate();
   const [downloading, setDownloading] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [sendError, setSendError] = useState('');
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -27,19 +24,6 @@ export default function InvoiceSuccessModal({ invoiceId, onClose }: Props) {
       URL.revokeObjectURL(url);
     } finally {
       setDownloading(false);
-    }
-  };
-
-  const handleSend = async () => {
-    setSending(true);
-    setSendError('');
-    try {
-      await api.post(`/api/invoices/${invoiceId}/send`);
-      setSent(true);
-    } catch {
-      setSendError('Failed to send email. Try again.');
-    } finally {
-      setSending(false);
     }
   };
 
@@ -78,25 +62,6 @@ export default function InvoiceSuccessModal({ invoiceId, onClose }: Props) {
               <p className="text-[11px] text-r-3">Save invoice as a PDF file</p>
             </div>
           </button>
-
-          <button
-            onClick={handleSend}
-            disabled={sending || sent}
-            className="flex items-center gap-3 px-4 py-3 rounded-[8px] border text-left transition-colors cursor-pointer hover:border-r-border-2"
-            style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={sent ? 'var(--accent)' : 'var(--text-2)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {sent
-                ? <polyline points="20 6 9 17 4 12" />
-                : <><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></>}
-            </svg>
-            <div>
-              <p className="text-[13px] font-medium text-r-1">{sending ? 'Sending…' : sent ? 'Sent!' : 'Send by email'}</p>
-              <p className="text-[11px] text-r-3">{sent ? 'Invoice emailed to client' : 'Email PDF directly to client'}</p>
-            </div>
-          </button>
-
-          {sendError && <p className="text-[11px] px-1" style={{ color: 'var(--overdue)' }}>{sendError}</p>}
 
           <button
             onClick={handleGoToInvoices}
