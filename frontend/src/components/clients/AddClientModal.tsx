@@ -225,7 +225,7 @@ export default function AddClientModal({ onClose, onCreated }: Props) {
   };
 
   return (
-    <Modal title="New Client" onClose={onClose}>
+    <Modal title="New Client" onClose={onClose} width={620}>
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Name *" error={errors.name} touched={t('name')}>
