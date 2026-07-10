@@ -4,6 +4,7 @@ import api from '../utils/api';
 import { useRefresh } from '../context/RefreshContext';
 import type { Invoice } from '../types';
 import AddInvoiceModal from '../components/invoices/AddInvoiceModal';
+import InvoiceSuccessModal from '../components/invoices/InvoiceSuccessModal';
 import EditInvoiceModal from '../components/invoices/EditInvoiceModal';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import PageLoader from '../components/ui/PageLoader';
@@ -109,6 +110,7 @@ export default function Invoices() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showAdd, setShowAdd] = useState(false);
+  const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Invoice | null>(null);
   const [editInvoice, setEditInvoice] = useState<Invoice | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -331,7 +333,18 @@ export default function Invoices() {
         ))}
       </div>
 
-      {showAdd && <AddInvoiceModal onClose={() => setShowAdd(false)} />}
+      {showAdd && (
+        <AddInvoiceModal
+          onClose={() => setShowAdd(false)}
+          onCreated={(id) => { setShowAdd(false); setCreatedInvoiceId(id); }}
+        />
+      )}
+      {createdInvoiceId && (
+        <InvoiceSuccessModal
+          invoiceId={createdInvoiceId}
+          onClose={() => { setCreatedInvoiceId(null); refresh(); }}
+        />
+      )}
       {editInvoice && <EditInvoiceModal invoice={editInvoice} onClose={() => setEditInvoice(null)} />}
       {confirmDelete && (
         <ConfirmModal

@@ -5,6 +5,7 @@ import type { Reminder, Project } from '../../types';
 import AddClientModal from '../clients/AddClientModal';
 import AddProjectModal from '../projects/AddProjectModal';
 import AddInvoiceModal from '../invoices/AddInvoiceModal';
+import InvoiceSuccessModal from '../invoices/InvoiceSuccessModal';
 import AddReminderModal from '../reminders/AddReminderModal';
 import { useRefresh } from '../../context/RefreshContext';
 
@@ -54,6 +55,7 @@ export default function Sidebar() {
   const [showAddClient, setShowAddClient] = useState(false);
   const [showAddProject, setShowAddProject] = useState(false);
   const [showAddInvoice, setShowAddInvoice] = useState(false);
+  const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
   const [showAddReminder, setShowAddReminder] = useState(false);
   const { tick, refresh } = useRefresh();
 
@@ -187,7 +189,16 @@ export default function Sidebar() {
       <AddProjectModal onClose={() => setShowAddProject(false)} />
     )}
     {showAddInvoice && (
-      <AddInvoiceModal onClose={() => setShowAddInvoice(false)} />
+      <AddInvoiceModal
+        onClose={() => setShowAddInvoice(false)}
+        onCreated={(id) => { setShowAddInvoice(false); setCreatedInvoiceId(id); }}
+      />
+    )}
+    {createdInvoiceId && (
+      <InvoiceSuccessModal
+        invoiceId={createdInvoiceId}
+        onClose={() => { setCreatedInvoiceId(null); refresh(); }}
+      />
     )}
     {showAddReminder && (
       <AddReminderModal onClose={() => setShowAddReminder(false)} />
