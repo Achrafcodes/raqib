@@ -66,10 +66,9 @@ function SuccessPrompt({ invoiceId, onClose }: { invoiceId: string; onClose: () 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.6)' }}>
-      <div className="w-full max-w-[380px] rounded-[12px] p-6 flex flex-col gap-5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-        {/* Icon + title */}
-        <div className="flex flex-col items-center gap-3 text-center">
+    <div className="flex flex-col gap-5 py-2">
+      {/* Icon + title */}
+      <div className="flex flex-col items-center gap-3 text-center">
           <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(74,222,128,0.12)' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
@@ -132,13 +131,12 @@ function SuccessPrompt({ invoiceId, onClose }: { invoiceId: string; onClose: () 
           </button>
         </div>
 
-        <button
-          onClick={onClose}
-          className="text-[12px] text-r-3 hover:text-r-1 transition-colors cursor-pointer"
-        >
-          Close
-        </button>
-      </div>
+      <button
+        onClick={onClose}
+        className="text-[12px] text-r-3 hover:text-r-1 transition-colors cursor-pointer text-center"
+      >
+        Close
+      </button>
     </div>
   );
 }
@@ -222,7 +220,11 @@ export default function AddInvoiceModal({ onClose }: Props) {
   };
 
   if (createdId) {
-    return <SuccessPrompt invoiceId={createdId} onClose={onClose} />;
+    return (
+      <Modal title="Invoice Created" onClose={onClose}>
+        <SuccessPrompt invoiceId={createdId} onClose={onClose} />
+      </Modal>
+    );
   }
 
   return (
