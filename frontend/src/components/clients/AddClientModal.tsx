@@ -201,7 +201,7 @@ export default function AddClientModal({ onClose, onCreated }: Props) {
 
   const errors = validate(form);
   const set = (k: keyof F, v: string) => setForm((f) => ({ ...f, [k]: v }));
-  const touch = (k: keyof F) => setTouched((t) => ({ ...t, [k]: true }));
+
   const t = (k: keyof F) => !!touched[k];
 
   const handleSubmit = async (e: FormEvent) => {
