@@ -229,16 +229,16 @@ export default function AddClientModal({ onClose, onCreated }: Props) {
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Name *" error={errors.name} touched={t('name')}>
-            <input value={form.name} onChange={(e) => set('name', e.target.value)} onBlur={() => touch('name')} placeholder="Full name" className={inputCls(t('name'), !!errors.name)} />
+            <input value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Full name" className={inputCls(t('name'), !!errors.name)} />
           </Field>
           <Field label="Company *" error={errors.company} touched={t('company')}>
-            <input value={form.company} onChange={(e) => set('company', e.target.value)} onBlur={() => touch('company')} placeholder="Company name" className={inputCls(t('company'), !!errors.company)} />
+            <input value={form.company} onChange={(e) => set('company', e.target.value)} placeholder="Company name" className={inputCls(t('company'), !!errors.company)} />
           </Field>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Email *" error={errors.email} touched={t('email')}>
-            <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} onBlur={() => touch('email')} placeholder="client@email.com" className={inputCls(t('email'), !!errors.email)} />
+            <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="client@email.com" className={inputCls(t('email'), !!errors.email)} />
           </Field>
           <Field label="Phone *" error={errors.phoneNumber} touched={t('phoneNumber')}>
             <div className="flex">
@@ -246,7 +246,6 @@ export default function AddClientModal({ onClose, onCreated }: Props) {
               <input
                 value={form.phoneNumber}
                 onChange={(e) => set('phoneNumber', e.target.value)}
-                onBlur={() => touch('phoneNumber')}
                 placeholder="234 567 890"
                 className={`flex-1 bg-r-bg border py-[9px] px-3 text-[13px] text-r-1 placeholder:text-r-3 outline-none transition-colors rounded-r-[8px] ${t('phoneNumber') && errors.phoneNumber ? 'border-[var(--overdue)]' : 'border-r-border focus:border-r-accent'}`}
               />
