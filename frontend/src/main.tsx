@@ -4,13 +4,16 @@ import './index.css';
 import App from './App.tsx';
 import { AuthProvider } from './context/AuthContext.tsx';
 import { RefreshProvider } from './context/RefreshContext.tsx';
+import ErrorBoundary from './components/ui/ErrorBoundary.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AuthProvider>
-      <RefreshProvider>
-        <App />
-      </RefreshProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <RefreshProvider>
+          <App />
+        </RefreshProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );

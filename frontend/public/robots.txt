@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /$
+Allow: /login
+Allow: /register
+Disallow: /dashboard
+Disallow: /clients
+Disallow: /projects
+Disallow: /invoices
+Disallow: /reminders
+Disallow: /settings
+Disallow: /oauth-callback
